@@ -1,0 +1,218 @@
+/* ── Pixel depth ─────────────────────────────────────────────────────────────
+   The artboards give every `.panel` a block shadow: a soft ambient drop plus a
+   hard, offset slab in the page's accent — the panel reads as a solid tile
+   standing a few pixels off the floor. The surfaces built outside the
+   artboards (grants, the policy wizard, vault, audit, guide, settings, the
+   model and profile cards) were flat glass, so half the product sat on the
+   page and half floated above it.
+
+   This file extends the one motif rather than adding a second: the same slab,
+   the same accent variable (--pg, so each route keeps its own colour), the
+   same voxels. Everything here is decoration — nothing changes layout, and the
+   "3D depth" and "Motion" switches in Settings turn all of it off. */
+
+/* 1 ── The slab. `!important` because several of these surfaces set an inline
+        box-shadow, and an inline style would otherwise win. */
+.px-block,
+.demo-guide,
+.settings-artifact-nav,
+.settings-artifact-panel,
+.artifact-side-panel,
+.artifact-kpi-card,
+.model-identity-card,
+.model-chart-card,
+.model-check-card,
+.profile-identity-card,
+.profile-activity-card,
+.emergency-stop-confirm {
+  --pxs: 7px;
+  box-shadow:
+    var(--sh-2),
+    var(--pxs) var(--pxs) 0 -1px rgba(var(--pg), 0.13),
+    var(--pxs) var(--pxs) 0 0 rgba(var(--pg), 0.22) !important;
+  transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease);
+}
+/* Opt-in lift: the tile rises toward the cursor and its slab grows to match,
+   so the far corner stays planted. */
+.px-lift:hover,
+.artifact-kpi-card:hover {
+  transform: translate(-3px, -3px);
+  box-shadow:
+    var(--sh-3),
+    10px 10px 0 -1px rgba(var(--pg), 0.16),
+    10px 10px 0 0 rgba(var(--pg), 0.3) !important;
+}
+
+/* 2 ── Corner pixels: a three-step staircase where the slab meets the floor.
+        Only on surfaces that do not clip their overflow. */
+.demo-guide,
+.emergency-stop-confirm {
+  position: relative;
+}
+.demo-guide::after,
+.emergency-stop-confirm::after,
+.px-corner::after {
+  content: "";
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  width: 5px;
+  height: 5px;
+  background: rgba(var(--pg), 0.7);
+  box-shadow:
+    -8px 0 0 rgba(var(--pg), 0.4),
+    0 -8px 0 rgba(var(--pg), 0.4),
+    -16px 0 0 rgba(var(--pg), 0.18),
+    0 -16px 0 rgba(var(--pg), 0.18);
+  pointer-events: none;
+}
+
+/* 3 ── Keys you can press. The step is drawn in the button's own colour, so a
+        green Start and a red Revoke each stand on their own slab. */
+.px-btn,
+.emergency-stop-trigger,
+.emergency-stop-go {
+  box-shadow:
+    0 3px 0 0 color-mix(in srgb, currentColor 40%, #05070d),
+    0 12px 18px -12px rgba(0, 0, 0, 0.8) !important;
+  transition: transform 0.12s var(--ease), box-shadow 0.12s var(--ease), opacity 0.2s;
+}
+.px-btn:hover:not(:disabled),
+.emergency-stop-trigger:hover:not(:disabled),
+.emergency-stop-go:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 0 0 color-mix(in srgb, currentColor 46%, #05070d),
+    0 16px 22px -12px rgba(0, 0, 0, 0.85) !important;
+}
+.px-btn:active:not(:disabled),
+.emergency-stop-trigger:active:not(:disabled),
+.emergency-stop-go:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow:
+    0 0 0 0 transparent,
+    inset 0 2px 5px rgba(0, 0, 0, 0.35) !important;
+  transition-duration: 0.05s;
+}
+.px-btn:disabled {
+  box-shadow: 0 1px 0 0 color-mix(in srgb, currentColor 25%, #05070d) !important;
+}
+
+/* 4 ── The spend meter, counted out in blocks instead of poured. */
+.px-meter {
+  border-radius: 2px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+.px-meter > div {
+  border-radius: 0 !important;
+}
+.px-meter::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 10px, rgba(8, 13, 25, 0.92) 10px 12px);
+  pointer-events: none;
+}
+
+/* 5 ── A small pile of voxels standing on its own shadow (VoxelStack). */
+.vox-stack {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-end;
+  flex: none;
+  padding: calc(var(--vs) * 0.5) calc(var(--vs) * 0.55) calc(var(--vs) * 0.55) calc(var(--vs) * 0.3);
+}
+.vox-stack .vox {
+  margin-right: calc(var(--vs) * -0.3);
+  filter: drop-shadow(0 calc(var(--vs) * 0.35) calc(var(--vs) * 0.3) rgba(0, 0, 0, 0.55));
+}
+.vox-stack .vox:nth-child(2) { margin-bottom: calc(var(--vs) * 0.5); }
+.vox-stack .vox:nth-child(3) { margin-bottom: calc(var(--vs) * 0.12); }
+.vox-ground {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 0;
+  height: calc(var(--vs) * 0.5);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.7), transparent 70%);
+  pointer-events: none;
+}
+.demo-guide-vox { margin-left: auto; }
+@keyframes vox-float {
+  0%, 100% { transform: rotateX(-26deg) rotateY(42deg) translateY(0); }
+  50% { transform: rotateX(-26deg) rotateY(42deg) translateY(-2.5px); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .vox-stack .vox { animation: vox-float 3.6s ease-in-out infinite; }
+  .vox-stack .vox:nth-child(2) { animation-delay: -1.2s; }
+  .vox-stack .vox:nth-child(3) { animation-delay: -2.4s; }
+}
+
+/* 6 ── An empty state gets a pixel box to sit under, unless it already brought
+        an icon. Drawn in 2D as a stepped extrusion: face, two slabs, shadow. */
+.empty-state:not(:has(svg))::before {
+  content: "";
+  flex: none;
+  width: 26px;
+  height: 26px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(var(--pg), 0.55);
+  background: linear-gradient(160deg, rgba(var(--pg), 0.34), rgba(var(--pg), 0.1));
+  box-shadow:
+    4px 4px 0 rgba(var(--pg), 0.3),
+    8px 8px 0 rgba(var(--pg), 0.14),
+    0 26px 18px -14px rgba(0, 0, 0, 0.85);
+}
+
+/* ── Off switches ── */
+html[data-depth="off"] .px-block,
+html[data-depth="off"] .demo-guide,
+html[data-depth="off"] .settings-artifact-nav,
+html[data-depth="off"] .settings-artifact-panel,
+html[data-depth="off"] .artifact-side-panel,
+html[data-depth="off"] .artifact-kpi-card,
+html[data-depth="off"] .model-identity-card,
+html[data-depth="off"] .model-chart-card,
+html[data-depth="off"] .model-check-card,
+html[data-depth="off"] .profile-identity-card,
+html[data-depth="off"] .profile-activity-card,
+html[data-depth="off"] .emergency-stop-confirm {
+  transform: none !important;
+  box-shadow: 0 2px 10px #0004 !important;
+}
+html[data-depth="off"] .px-btn,
+html[data-depth="off"] .emergency-stop-trigger,
+html[data-depth="off"] .emergency-stop-go {
+  transform: none !important;
+  box-shadow: none !important;
+}
+html[data-depth="off"] .demo-guide::after,
+html[data-depth="off"] .emergency-stop-confirm::after,
+html[data-depth="off"] .px-corner::after,
+html[data-depth="off"] .empty-state::before,
+html[data-depth="off"] .vox-ground {
+  display: none;
+}
+html[data-depth="off"] .vox-stack .vox {
+  filter: none;
+}
+
+/* The slab needs 7px of room to the right and below; on a phone the gutters
+   are too tight for it, so it steps down rather than being clipped. */
+@media (max-width: 760px) {
+  .px-block,
+  .demo-guide,
+  .settings-artifact-nav,
+  .settings-artifact-panel,
+  .artifact-side-panel,
+  .artifact-kpi-card,
+  .model-identity-card,
+  .model-chart-card,
+  .model-check-card,
+  .profile-identity-card,
+  .profile-activity-card,
+  .emergency-stop-confirm {
+    --pxs: 4px;
+  }
+}

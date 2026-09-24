@@ -1,0 +1,25 @@
+name: Frontend CI
+
+# The dashboard deploys from `main` on Render. This is the check a pull
+# is made a required status check.
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["backend/**", "programs/**", "docs/**", "design/**", "*.md"]
+  pull_request:
+    paths-ignore: ["backend/**", "programs/**", "docs/**", "design/**", "*.md"]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      # typecheck + vitest + vite build
+      # before any commit.
+      - run: npm run check

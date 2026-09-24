@@ -1,0 +1,31 @@
+import type { ChainAdapter } from "./adapter.js";
+import { MockChain } from "./mock.js";
+import { SolanaChain } from "./solana.js";
+
+let instance: ChainAdapter | null = null;
+
+// Call once at startup (server.ts) so route handlers can use getChain() sync.
+export async function initChain(): Promise<ChainAdapter> {
+  if (instance) return instance;
+  const kind = process.env.CHAIN ?? "mock";
+  if (kind === "solana") {
+    const programId = process.env.REDLINE_PROGRAM_ID;
+    const executorKeypairPath = process.env.EXECUTOR_KEYPAIR_PATH;
+    if (!programId || !executorKeypairPath) throw new Error("CHAIN=solana needs REDLINE_PROGRAM_ID and EXECUTOR_KEYPAIR_PATH");
+    instance = await SolanaChain.create({
+      rpcUrl: process.env.SOLANA_RPC_URL ?? "https://api.devnet.solana.com",
+      wsUrl: process.env.SOLANA_WS_URL ?? "wss://api.devnet.solana.com",
+      programId,
+      executorKeypairPath,
+      ownerKeypairPath: process.env.DEMO_OWNER_KEYPAIR_PATH,
+    });
+  } else {
+    instance = new MockChain();
+  }
+  return instance;
+}
+
+export function getChain(): ChainAdapter {
+  if (!instance) throw new Error("chain not initialised: call initChain() first");
+  return instance;
+}

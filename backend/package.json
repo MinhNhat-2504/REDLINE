@@ -1,0 +1,44 @@
+{
+  "name": "redline-backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "REDLINE off-chain services: API, policy engine, agent runtime, indexer.",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "dev:lab": "tsx watch src/lab-server.ts",
+    "start": "prisma db push --accept-data-loss --skip-generate && node dist/server.js",
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "db:push": "prisma db push",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio",
+    "devnet:setup": "tsx scripts/devnet-setup.ts",
+    "db:cleanup": "tsx scripts/cleanup.ts",
+    "program:fetch": "tsx scripts/fetch-program.ts",
+    "test:onchain": "vitest run --config vitest.onchain.config.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "10.0.2",
+    "@fastify/rate-limit": "^10.2.2",
+    "@prisma/client": "6.5.0",
+    "@solana-program/system": "^0.14.0",
+    "@solana-program/token": "^0.16.0",
+    "@solana/kit": "8.0.0",
+    "fastify": "5.2.1",
+    "openai": "7.5.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "24.3.0",
+    "litesvm": "^1.4.1",
+    "prisma": "6.5.0",
+    "tsx": "4.19.3",
+    "typescript": "5.9.2",
+    "vitest": "4.1.11"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

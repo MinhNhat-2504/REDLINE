@@ -1,0 +1,1796 @@
+/* REDLINE pixel on-chain theme
+   Crisp ledger geometry and stepped depth, while preserving the readable
+   application layout owned by layout.css. */
+
+:root {
+  --px-ink: #050914;
+  --px-surface: #101b2e;
+  --px-surface-hi: #16243a;
+  --px-surface-low: #0b1424;
+  --px-edge: rgba(92, 119, 158, .58);
+  --px-edge-soft: rgba(92, 119, 158, .28);
+  --px-text: #edf3fb;
+  --px-muted: #91a2bb;
+  --px-grid: rgba(105, 139, 188, .055);
+  --px-step-shadow: 4px 4px 0 rgba(1, 5, 13, .92);
+  --px-panel-shadow: 4px 4px 0 rgba(var(--pg), .13), 0 18px 38px rgba(0, 0, 0, .28);
+}
+
+/* Ledger ground: a quiet 12px/48px grid reads as on-chain infrastructure. */
+.redline-app {
+  background-color: var(--px-ink) !important;
+  background-image:
+    linear-gradient(rgba(105, 139, 188, .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(105, 139, 188, .035) 1px, transparent 1px),
+    linear-gradient(rgba(105, 139, 188, .055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(105, 139, 188, .055) 1px, transparent 1px),
+    radial-gradient(ellipse 76% 48% at 88% -4%, rgba(68, 129, 226, .16), transparent 62%),
+    radial-gradient(ellipse 58% 42% at 2% 94%, rgba(146, 92, 220, .10), transparent 60%) !important;
+  background-position: 0 0, 0 0, 0 0, 0 0, center, center !important;
+  background-size: 12px 12px, 12px 12px, 48px 48px, 48px 48px, auto, auto !important;
+}
+
+.app-main {
+  scrollbar-color: rgba(104, 136, 182, .76) rgba(5, 9, 20, .5);
+}
+
+.app-main::-webkit-scrollbar-thumb {
+  border-radius: 0;
+  background: repeating-linear-gradient(180deg, #6c87ad 0 7px, #263750 7px 10px);
+}
+
+/* Chrome */
+.app-header {
+  border-bottom: 2px solid rgba(83, 109, 147, .48) !important;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, .58), 0 18px 34px rgba(0, 0, 0, .18) !important;
+}
+
+.app-header:not(.header-scrolled),
+.app-header.header-scrolled {
+  background:
+    linear-gradient(90deg, rgba(19, 31, 51, .97), rgba(8, 15, 28, .97)),
+    #0b1424 !important;
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.app-header nav button,
+.header-tool,
+.mobile-nav-toggle {
+  border-radius: 4px !important;
+}
+
+.app-header nav button {
+  letter-spacing: .02em;
+}
+
+.app-header nav button:hover,
+.header-tool:hover,
+.mobile-nav-toggle:hover {
+  background: rgba(92, 130, 188, .11) !important;
+  box-shadow: inset 0 -2px rgba(132, 172, 229, .18);
+}
+
+.app-header nav button > .absolute {
+  height: 3px !important;
+  border-radius: 0 !important;
+  box-shadow: 6px 0 0 currentColor, -6px 0 0 currentColor, 0 0 14px currentColor !important;
+}
+
+.header-tool,
+.mobile-nav-toggle {
+  border-width: 1px !important;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, .65);
+}
+
+.app-header .mobile-nav-panel {
+  border-width: 2px;
+  border-radius: 6px;
+  background:
+    linear-gradient(rgba(106, 141, 190, .045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(106, 141, 190, .045) 1px, transparent 1px),
+    #0d1728f7;
+  background-size: 12px 12px;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, .72), 0 26px 60px rgba(0, 0, 0, .52);
+}
+
+/* Product journey */
+.app-main:not(.app-main-home) .route-flow-bar {
+  border: 2px solid var(--px-edge);
+  border-radius: 6px;
+  background:
+    linear-gradient(90deg, rgba(var(--pg), .055) 1px, transparent 1px),
+    linear-gradient(rgba(var(--pg), .045) 1px, transparent 1px),
+    linear-gradient(110deg, rgba(19, 32, 54, .98), rgba(10, 19, 34, .97));
+  background-size: 24px 24px, 24px 24px, auto;
+  box-shadow: 4px 4px 0 rgba(var(--pg), .13), 0 18px 36px rgba(0, 0, 0, .26);
+}
+
+.route-flow-home,
+.route-flow-pager button {
+  border-radius: 4px;
+  border-color: var(--px-edge);
+  background: linear-gradient(180deg, rgba(37, 54, 81, .92), rgba(22, 36, 59, .92));
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, .68), inset 0 1px rgba(255, 255, 255, .055);
+}
+
+.route-flow-home:active,
+.route-flow-pager button:not(:disabled):active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: none;
+}
+
+.route-flow-current::before {
+  width: 4px;
+  box-shadow: 0 6px 0 rgba(var(--pg), .48), 0 -6px 0 rgba(var(--pg), .48), 0 0 15px rgba(var(--pg), .62);
+}
+
+.route-flow-current > span,
+.route-flow-home small,
+.route-flow-pager small {
+  text-transform: uppercase;
+}
+
+.route-flow-track {
+  gap: 5px;
+}
+
+.route-flow-track button > span {
+  height: 5px;
+  border-radius: 0;
+  background: repeating-linear-gradient(90deg, rgba(105, 129, 164, .5) 0 8px, transparent 8px 11px);
+}
+
+.route-flow-track button[data-complete="true"] > span {
+  background: repeating-linear-gradient(90deg, rgba(var(--pg), .58) 0 8px, transparent 8px 11px);
+}
+
+.route-flow-track button.is-active > span {
+  background: rgb(var(--pg));
+  box-shadow: 0 0 0 2px rgba(var(--pg), .17), 0 0 15px rgba(var(--pg), .75);
+  transform: none;
+}
+
+/* Route art becomes a framed data scene, with a restrained scan line texture. */
+.route-page-stage > .route-scene-has-art {
+  overflow: hidden;
+  border: 2px solid rgba(var(--pg), .38);
+  border-radius: 6px;
+  box-shadow: 5px 5px 0 rgba(var(--pg), .13), 0 22px 46px rgba(0, 0, 0, .28);
+}
+
+.route-page-stage > .route-scene-has-art::after {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 5px, rgba(177, 211, 255, .025) 5px 6px),
+    linear-gradient(90deg, rgba(var(--pg), .9) 0 16px, transparent 16px) top 12px left 12px / 42px 3px no-repeat,
+    linear-gradient(rgba(var(--pg), .9) 0 16px, transparent 16px) top 12px left 12px / 3px 42px no-repeat,
+    linear-gradient(270deg, rgba(var(--pg), .9) 0 16px, transparent 16px) bottom 12px right 12px / 42px 3px no-repeat,
+    linear-gradient(0deg, rgba(var(--pg), .9) 0 16px, transparent 16px) bottom 12px right 12px / 3px 42px no-repeat;
+}
+
+.route-scene-art {
+  image-rendering: auto;
+  filter: brightness(.68) saturate(.86) contrast(1.06);
+}
+
+.route-scene-core {
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, .52), 0 0 22px rgba(var(--pg), .32) !important;
+}
+
+.route-page > :first-child::before {
+  width: 4px;
+  background: rgb(var(--pg)) !important;
+  box-shadow: 0 10px 0 rgba(var(--pg), .4), 0 -10px 0 rgba(var(--pg), .4), 0 0 16px rgba(var(--pg), .44) !important;
+}
+
+.route-page > :first-child h1 {
+  color: var(--px-text) !important;
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, .78), 0 0 22px rgba(var(--pg), .12);
+}
+
+.route-page > :first-child p {
+  color: #afbdd1 !important;
+}
+
+/* Cards: short corners and two-stage shadows give depth without soft blobs. */
+.route-page .rounded-2xl,
+.market-grid > :first-child,
+.redline-spine,
+.protocol-facts,
+.policy-lab,
+.redline-console,
+.analytics-ledger {
+  border-color: var(--px-edge) !important;
+  border-radius: 6px !important;
+  background-color: var(--px-surface) !important;
+  box-shadow: var(--px-panel-shadow) !important;
+}
+
+.route-page .rounded-2xl {
+  background-image:
+    linear-gradient(135deg, rgba(var(--pg), .045), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, .018), transparent 42%) !important;
+  transition: transform .14s steps(2, end), border-color .14s linear, box-shadow .14s steps(2, end);
+}
+
+.route-page .rounded-2xl:hover,
+.route-page .rounded-2xl:focus-within {
+  border-color: rgba(var(--pg), .68) !important;
+  box-shadow: 6px 6px 0 rgba(var(--pg), .18), 0 22px 44px rgba(0, 0, 0, .34) !important;
+  transform: translate(-2px, -2px);
+}
+
+.route-page .rounded-xl,
+.route-page .rounded-lg,
+.route-page .rounded-md {
+  border-radius: 4px !important;
+}
+
+.route-page .rounded-full {
+  border-radius: 3px !important;
+}
+
+.route-page .absolute.inset-0.rounded-2xl,
+.route-page .absolute.rounded-2xl {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Data surfaces */
+.page-agents .agent-metrics {
+  background:
+    linear-gradient(90deg, rgba(var(--pg), .045) 1px, transparent 1px),
+    var(--px-surface-low);
+  background-size: 24px 24px;
+}
+
+.page-agents .agent-metrics > div,
+.analytics-ledger > div,
+.page-audit > :nth-child(2) > div {
+  border-color: rgba(100, 128, 168, .42) !important;
+}
+
+.analytics-ledger {
+  background-image:
+    linear-gradient(90deg, rgba(var(--pg), .055) 1px, transparent 1px),
+    linear-gradient(rgba(var(--pg), .045) 1px, transparent 1px) !important;
+  background-size: 24px 24px !important;
+}
+
+.analytics-ledger [class*="text-3xl"],
+.analytics-ledger [class*="text-2xl"],
+.agent-metrics [class*="font-bold"],
+.page-treasury [class*="font-bold"] {
+  text-shadow: 0 0 14px rgba(var(--pg), .22);
+}
+
+.route-page table,
+.route-page [role="table"] {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.route-page tr:hover,
+.route-page [role="row"]:hover {
+  background: rgba(var(--pg), .045);
+}
+
+/* Actions and inputs feel like hardware controls. */
+.route-page button:not(.recharts-layer),
+.redline-console-prompts button,
+.redline-console-input button {
+  border-radius: 4px !important;
+  transition: transform .12s steps(2, end), box-shadow .12s steps(2, end), border-color .12s linear, color .12s linear, background .12s linear;
+}
+
+.route-page button:not(:disabled):not(.recharts-layer) {
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, .52);
+}
+
+.route-page button:not(:disabled):not(.recharts-layer):active,
+.redline-console-prompts button:not(:disabled):active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: none !important;
+}
+
+.route-page input,
+.route-page select,
+.route-page textarea {
+  min-height: 42px;
+  border-radius: 4px !important;
+  border-width: 1px !important;
+  background-color: #091322 !important;
+  box-shadow: inset 3px 3px 0 rgba(0, 0, 0, .24), inset 0 -1px rgba(142, 172, 213, .08);
+}
+
+.route-page input:focus,
+.route-page select:focus,
+.route-page textarea:focus {
+  border-color: rgb(var(--pg)) !important;
+  box-shadow: inset 3px 3px 0 rgba(0, 0, 0, .24), 3px 3px 0 rgba(var(--pg), .22) !important;
+}
+
+.route-page input::placeholder,
+.route-page textarea::placeholder {
+  color: #6f8098 !important;
+  opacity: 1;
+}
+
+/* Protocol AI console */
+.redline-console {
+  overflow: hidden;
+  border-width: 2px;
+  background:
+    linear-gradient(rgba(87, 125, 180, .04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(87, 125, 180, .04) 1px, transparent 1px),
+    #081322 !important;
+  background-size: 12px 12px !important;
+}
+
+.redline-console-bar,
+.redline-console-input {
+  border-color: var(--px-edge) !important;
+  background: #132039 !important;
+}
+
+.redline-console-bar {
+  box-shadow: inset 0 -2px rgba(0, 0, 0, .3);
+}
+
+.redline-console-bar::before {
+  width: 7px;
+  height: 7px;
+  border-radius: 1px;
+  box-shadow: 11px 0 0 rgba(var(--pg), .46), 22px 0 0 rgba(var(--pg), .22);
+}
+
+.redline-console-body {
+  background: linear-gradient(90deg, rgba(var(--pg), .035), transparent 42%);
+}
+
+.redline-console-caret,
+.redline-console-good {
+  color: rgb(var(--pg)) !important;
+  text-shadow: 0 0 10px rgba(var(--pg), .5);
+}
+
+.redline-console-prompts {
+  border-color: var(--px-edge-soft);
+  background: rgba(12, 24, 42, .94);
+}
+
+.redline-console-prompts button {
+  border-color: rgba(var(--pg), .28);
+  background: rgba(var(--pg), .07);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, .48);
+}
+
+.redline-console-input:focus-within {
+  outline: 2px solid rgba(var(--pg), .6);
+  outline-offset: -2px;
+}
+
+/* Menus and feedback */
+[data-sonner-toaster] [data-sonner-toast] {
+  border-radius: 4px !important;
+  border: 2px solid #4d6486 !important;
+  background: #101b2e !important;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, .72), 0 18px 38px rgba(0, 0, 0, .34) !important;
+}
+
+.command-palette,
+[role="dialog"] {
+  border-radius: 6px !important;
+}
+
+.page-transition-streak {
+  height: 4px;
+  background: repeating-linear-gradient(90deg, transparent 0 14px, rgb(var(--pg)) 14px 38px, rgba(var(--pg), .28) 38px 44px) !important;
+  box-shadow: 0 0 15px rgba(var(--pg), .58) !important;
+}
+
+.page-transition-content {
+  animation: px-page-in .22s steps(4, end) both;
+}
+
+@keyframes px-page-in {
+  from { opacity: .45; transform: translateY(8px); filter: brightness(.75); }
+  to { opacity: 1; transform: translateY(0); filter: brightness(1); }
+}
+
+@media (hover: hover) {
+  .route-page button:not(:disabled):hover { transform: translate(-1px, -1px); }
+}
+
+@media (max-width: 760px) {
+  :root { --px-panel-shadow: 3px 3px 0 rgba(var(--pg), .12), 0 14px 28px rgba(0, 0, 0, .24); }
+
+  .redline-app {
+    background-size: 16px 16px, 16px 16px, 64px 64px, 64px 64px, auto, auto !important;
+  }
+
+  .app-main:not(.app-main-home) .route-flow-bar {
+    box-shadow: 3px 3px 0 rgba(var(--pg), .12), 0 12px 24px rgba(0, 0, 0, .22);
+  }
+
+  .route-page-stage > .route-scene-has-art {
+    box-shadow: 3px 3px 0 rgba(var(--pg), .12), 0 15px 28px rgba(0, 0, 0, .22);
+  }
+
+  .route-page .rounded-2xl:hover,
+  .route-page .rounded-2xl:focus-within {
+    transform: none;
+    box-shadow: var(--px-panel-shadow) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .app-main:not(.app-main-home) .route-flow-bar {
+    border-radius: 4px;
+  }
+
+  .route-flow-track button > span {
+    height: 3px;
+    background: rgba(105, 129, 164, .5);
+  }
+
+  .route-flow-track button[data-complete="true"] > span {
+    background: rgba(var(--pg), .58);
+  }
+
+  .route-page-stage > .route-scene-has-art::after {
+    background: repeating-linear-gradient(0deg, transparent 0 7px, rgba(177, 211, 255, .02) 7px 8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition-content { animation: none; }
+  .route-page .rounded-2xl,
+  .route-page button,
+  .route-flow-home,
+  .route-flow-pager button { transition: none; }
+}
+
+/* --------------------------------------------------------------------------
+   Protocol desktop flow
+   The story uses the full viewport: a compact narrative rail on the left and
+   the working surface on the right. The rail repeats across every chapter so
+   the eye always knows where it is in the transaction journey.
+   -------------------------------------------------------------------------- */
+@media (min-width: 1181px) {
+  .protocol-experience {
+    --protocol-rail: clamp(268px, 22vw, 360px);
+    --protocol-flow-gap: clamp(28px, 3vw, 56px);
+  }
+
+  .astral-hero.protocol-hero {
+    padding-right: clamp(32px, 4vw, 76px);
+    padding-left: clamp(32px, 4vw, 76px);
+  }
+
+  .astral-hero .protocol-hero-copy {
+    width: min(52%, 780px);
+  }
+
+  .astral-hero .protocol-hero-lede {
+    max-width: 560px;
+    font-size: clamp(14px, .95vw, 17px);
+  }
+
+  .celestial-scene {
+    width: 51%;
+  }
+
+  .protocol-story {
+    width: min(calc(100% - 48px), 1840px);
+    max-width: 1840px;
+    padding-inline: 0;
+  }
+
+  /* The world chooser acts as the first overview in the flow. */
+  .astral-worlds {
+    display: grid;
+    grid-template-columns: var(--protocol-rail) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    column-gap: var(--protocol-flow-gap);
+    padding-top: clamp(64px, 7vw, 112px);
+  }
+
+  .astral-worlds > .section-eyebrow {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+  }
+
+  .worlds-heading {
+    grid-column: 1;
+    grid-row: 2;
+    display: block;
+    margin: 22px 0 32px;
+  }
+
+  .worlds-heading h2 {
+    font-size: clamp(36px, 3vw, 52px);
+  }
+
+  .worlds-heading > span {
+    display: block;
+    margin-top: 22px;
+    line-height: 1.7;
+  }
+
+  .world-tabs {
+    grid-column: 1;
+    grid-row: 3;
+    display: grid;
+    grid-template-columns: 1fr;
+    align-self: stretch;
+    border-top: 1px solid rgba(93, 120, 158, .55);
+    border-bottom: 1px solid rgba(93, 120, 158, .34);
+  }
+
+  .world-tabs button {
+    min-height: 76px;
+    padding: 18px 14px;
+    border-top: 0;
+    border-left: 3px solid transparent;
+    border-bottom: 1px solid rgba(77, 100, 136, .30);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .008));
+  }
+
+  .world-tabs button:last-child { border-bottom: 0; }
+
+  .world-tabs button[aria-pressed="true"] {
+    border-left-color: #dfc38c;
+    background: linear-gradient(90deg, rgba(223, 195, 140, .13), transparent 78%);
+    box-shadow: inset 8px 0 18px rgba(223, 195, 140, .035);
+  }
+
+  .world-feature {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    min-height: 560px;
+    height: 100%;
+    border-width: 2px;
+    border-radius: 6px;
+    box-shadow: 6px 6px 0 rgba(196, 150, 58, .13), 0 24px 48px rgba(0, 0, 0, .30);
+  }
+
+  .world-feature-copy {
+    display: flex;
+    min-height: 100%;
+    max-width: 520px;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(48px, 5vw, 84px);
+  }
+
+  .world-feature-copy h3 {
+    font-size: clamp(46px, 4.3vw, 72px);
+  }
+
+  .world-feature-copy p {
+    max-width: 410px;
+    font-size: 15px;
+  }
+
+  /* The lab continues the same rail/content rhythm. */
+  .policy-lab {
+    display: grid;
+    grid-template-columns: var(--protocol-rail) minmax(0, 1fr);
+    column-gap: var(--protocol-flow-gap);
+    align-items: start;
+    padding-block: clamp(88px, 8vw, 132px);
+    border-bottom: 1px solid rgba(74, 99, 136, .34);
+  }
+
+  .policy-lab > .section-eyebrow,
+  .policy-lab > .lab-heading {
+    grid-column: 1;
+  }
+
+  .policy-lab > .section-eyebrow { grid-row: 1; }
+
+  .policy-lab > .lab-heading {
+    grid-row: 2 / span 3;
+    display: block;
+    margin: 22px 0 0;
+  }
+
+  .lab-heading h2 {
+    font-size: clamp(34px, 2.8vw, 48px);
+  }
+
+  .lab-heading > p {
+    max-width: 300px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(77, 101, 139, .42);
+  }
+
+  .policy-lab > .lab-presets,
+  .policy-lab > .lab-workspace,
+  .policy-lab > [role="status"],
+  .policy-lab > .lab-error {
+    grid-column: 2;
+  }
+
+  .policy-lab > .lab-presets { grid-row: 1; align-self: start; margin: 0 0 18px; }
+  .policy-lab > .lab-workspace,
+  .policy-lab > [role="status"] { grid-row: 2 / span 2; }
+
+  .lab-workspace {
+    grid-template-columns: minmax(330px, .72fr) minmax(0, 1.28fr);
+    min-height: 610px;
+    border-width: 2px;
+    border-radius: 6px;
+    box-shadow: 5px 5px 0 rgba(196, 150, 58, .11), 0 22px 44px rgba(0, 0, 0, .25);
+  }
+
+  .lab-form,
+  .lab-results {
+    padding: clamp(26px, 2.4vw, 42px);
+  }
+
+  /* Wide metrics bridge the overview and the operational chapters. */
+  .protocol-story .protocol-facts {
+    margin-top: 0;
+    border-width: 1px 2px 2px;
+    border-radius: 0 0 6px 6px !important;
+    box-shadow: 4px 4px 0 rgba(196, 150, 58, .11), 0 18px 36px rgba(0, 0, 0, .22) !important;
+  }
+
+  .protocol-fact {
+    min-height: 112px;
+    padding-inline: clamp(22px, 2.5vw, 44px);
+  }
+
+  /* Every chapter aligns to the same two-column transaction path. */
+  .protocol-chapter {
+    display: grid;
+    grid-template-columns: var(--protocol-rail) minmax(0, 1fr);
+    column-gap: var(--protocol-flow-gap);
+    align-items: start;
+    padding-top: clamp(82px, 8vw, 132px);
+  }
+
+  .protocol-chapter::before {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    align-self: start;
+    width: 100%;
+    height: 1px;
+    content: "";
+    background: linear-gradient(90deg, rgba(223, 195, 140, .72), rgba(78, 103, 143, .46) 28%, transparent 88%);
+  }
+
+  .protocol-chapter-heading {
+    position: sticky;
+    top: 150px;
+    grid-column: 1;
+    grid-row: 2;
+    display: block;
+    margin: 0;
+    padding: 28px 0 28px 18px;
+    border-left: 4px solid #dfc38c;
+  }
+
+  .protocol-chapter-heading span {
+    display: block;
+    padding: 0;
+  }
+
+  .protocol-chapter-heading h2 {
+    max-width: 330px;
+    margin-top: 24px;
+    font-size: clamp(28px, 2.2vw, 40px);
+    line-height: 1.08;
+    letter-spacing: -.045em;
+  }
+
+  .protocol-chapter > .redline-spine,
+  .protocol-chapter > .protocol-proof-layout,
+  .protocol-chapter > .protocol-console-layout,
+  .protocol-live-chapter > .rounded-2xl {
+    grid-column: 2;
+    grid-row: 2;
+    min-width: 0;
+    margin-top: 28px;
+  }
+
+  .protocol-chapter > .protocol-next-chapter {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .redline-spine {
+    min-height: 410px;
+  }
+
+  .protocol-principles {
+    margin-top: clamp(82px, 8vw, 132px);
+    border: 1px solid rgba(78, 103, 143, .48);
+    border-radius: 6px;
+    background: linear-gradient(115deg, rgba(18, 31, 52, .88), rgba(10, 20, 36, .72));
+    box-shadow: 5px 5px 0 rgba(196, 150, 58, .10), 0 20px 40px rgba(0, 0, 0, .22);
+  }
+
+  .protocol-principle {
+    min-height: 300px;
+    padding: 32px clamp(28px, 3vw, 54px) 38px;
+  }
+
+  .protocol-principle:first-child { padding-left: clamp(28px, 3vw, 54px); }
+
+  .protocol-proof-layout {
+    grid-template-columns: minmax(260px, .52fr) minmax(520px, 1.48fr);
+    gap: clamp(30px, 3vw, 56px);
+  }
+
+  .protocol-proof-copy {
+    padding: 28px;
+    border: 1px solid rgba(78, 103, 143, .42);
+    border-radius: 4px;
+    background: rgba(14, 27, 47, .72);
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, .45);
+  }
+
+  .protocol-console-layout {
+    grid-template-columns: minmax(260px, .5fr) minmax(540px, 1.5fr);
+    gap: clamp(30px, 3vw, 56px);
+  }
+
+  .protocol-console-copy {
+    padding: 26px 0 0;
+  }
+
+  .protocol-live-chapter {
+    padding-bottom: clamp(88px, 8vw, 132px);
+  }
+
+  .protocol-footer {
+    margin-top: 0;
+    padding: 34px 0 42px;
+  }
+}
+
+@media (min-width: 1181px) and (max-width: 1440px) {
+  .protocol-experience {
+    --protocol-rail: 270px;
+    --protocol-flow-gap: 28px;
+  }
+
+  .protocol-story { width: calc(100% - 36px); }
+  .world-feature { min-height: 520px; }
+  .lab-workspace { grid-template-columns: minmax(300px, .8fr) minmax(0, 1.2fr); }
+  .protocol-proof-layout,
+  .protocol-console-layout { grid-template-columns: minmax(230px, .55fr) minmax(0, 1.45fr); }
+}
+
+/* Protocol clarity pass
+   All reading content remains in document flow. Crisp type and hard edges make
+   this destination feel like the same on-chain product as the routes after it. */
+.protocol-experience,
+.protocol-experience button,
+.protocol-experience input,
+.protocol-experience select {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+.protocol-hero-art-layer,
+.protocol-hero-art-layer img,
+.world-feature > img,
+.protocol-hero-copy,
+.world-feature-copy {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.protocol-hero-art-layer {
+  transform: none !important;
+}
+
+.protocol-hero-art-layer img {
+  transform: none !important;
+  filter: brightness(.66) saturate(.88) contrast(1.12) !important;
+}
+
+.protocol-hero-wash {
+  background:
+    linear-gradient(90deg, rgba(5, 11, 22, .97), rgba(7, 16, 31, .80) 43%, rgba(7, 16, 31, .22) 72%, rgba(5, 10, 20, .08)),
+    linear-gradient(0deg, #050914 0%, transparent 36%) !important;
+}
+
+.astral-hero-grid {
+  opacity: .28;
+  background-size: 48px 48px;
+  mask-image: linear-gradient(90deg, rgba(0, 0, 0, .46), #000 45%, rgba(0, 0, 0, .78));
+}
+
+.protocol-kicker {
+  border: 1px solid rgba(196, 150, 58, .42) !important;
+  border-radius: 4px !important;
+  padding: 9px 12px !important;
+  background: rgba(12, 24, 42, .82) !important;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, .62) !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+.astral-hero .protocol-hero-title,
+.astral-hero .protocol-hero-title .protocol-title-line,
+.worlds-heading h2,
+.worlds-heading h2 em,
+.world-feature-copy h3,
+.lab-heading h2,
+.lab-heading h2 em,
+.lab-empty h3 {
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-style: normal !important;
+}
+
+.astral-hero .protocol-hero-title {
+  font-weight: 720 !important;
+  letter-spacing: -.058em;
+  text-shadow: 4px 4px 0 rgba(0, 0, 0, .74), 0 0 24px rgba(196, 150, 58, .10);
+}
+
+.astral-hero .protocol-hero-title .protocol-title-accent {
+  width: fit-content;
+  margin-top: .2em;
+  padding: .08em .16em .1em;
+  border-left: 4px solid #dfc38c;
+  color: #f0d7a4 !important;
+  background: linear-gradient(90deg, rgba(223, 195, 140, .11), transparent);
+  font-size: .69em;
+  font-weight: 650 !important;
+  letter-spacing: -.035em;
+}
+
+.protocol-primary-action,
+.protocol-text-action,
+.astral-button,
+.world-feature-copy button,
+.protocol-proof-copy button,
+.protocol-next-chapter,
+.protocol-return-button {
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, .62) !important;
+}
+
+.protocol-primary-action:active,
+.protocol-text-action:active,
+.astral-button:active,
+.protocol-next-chapter:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: none !important;
+}
+
+.world-feature > img {
+  transform: none !important;
+  filter: brightness(.70) saturate(.88) contrast(1.13) !important;
+}
+
+.world-feature::after {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 6px, rgba(187, 216, 255, .022) 6px 7px),
+    linear-gradient(90deg, rgba(5, 12, 24, .97), rgba(8, 18, 34, .70) 42%, transparent 82%) !important;
+}
+
+.worlds-heading h2,
+.lab-heading h2 {
+  font-weight: 680 !important;
+  letter-spacing: -.05em;
+}
+
+.worlds-heading h2 em,
+.lab-heading h2 em {
+  color: #dfc38c;
+  font-weight: 680 !important;
+}
+
+.world-feature-copy h3 {
+  font-weight: 700 !important;
+  letter-spacing: -.05em;
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, .68);
+}
+
+.lab-empty h3 {
+  font-weight: 650 !important;
+}
+
+.protocol-chapter-nav.protocol-chapter-index,
+.protocol-chapter-nav.protocol-chapter-index.is-visible {
+  position: relative;
+  z-index: 4;
+  inset: auto;
+  display: grid;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 8px;
+  border: 2px solid rgba(84, 109, 149, .54);
+  border-radius: 6px;
+  background:
+    linear-gradient(90deg, rgba(196, 150, 58, .05) 1px, transparent 1px),
+    #0e192bea;
+  background-size: 24px 24px;
+  box-shadow: 4px 4px 0 rgba(196, 150, 58, .11), 0 18px 36px rgba(0, 0, 0, .22);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+
+.protocol-chapter-nav.protocol-chapter-index button {
+  min-height: 46px;
+  border-radius: 4px;
+}
+
+.protocol-chapter-nav.protocol-chapter-index button:hover,
+.protocol-chapter-nav.protocol-chapter-index button:focus-visible {
+  border-color: rgba(223, 195, 140, .52);
+  color: #f0d7a4;
+  background: rgba(223, 195, 140, .08);
+  transform: none;
+}
+
+.protocol-facts,
+.protocol-principles,
+.protocol-proof-copy,
+.lab-workspace,
+.world-feature {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+@media (min-width: 1181px) {
+  .protocol-chapter-heading {
+    position: relative;
+    top: auto;
+    align-self: start;
+  }
+}
+
+@media (max-width: 1180px) {
+  .protocol-chapter-nav.protocol-chapter-index {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+    overflow-x: auto;
+    transform: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .protocol-chapter-nav.protocol-chapter-index {
+    width: 100%;
+    grid-template-columns: repeat(4, max-content);
+  }
+
+  .protocol-chapter-nav.protocol-chapter-index button {
+    min-width: 132px;
+  }
+}
+
+/* Protocol wide-screen refinement
+   Large desktop canvases should feel occupied, while the major frames stay
+   quiet enough that content and artwork lead the hierarchy. */
+.protocol-experience .policy-lab {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+@media (min-width: 1181px) {
+  .protocol-experience {
+    --protocol-rail: clamp(280px, 18vw, 360px);
+    --protocol-flow-gap: clamp(28px, 2.4vw, 52px);
+  }
+
+  .protocol-story {
+    width: calc(100% - clamp(32px, 3.2vw, 72px));
+    max-width: none;
+    margin-inline: auto;
+  }
+
+  .world-feature,
+  .lab-workspace,
+  .protocol-chapter-nav.protocol-chapter-index,
+  .protocol-story .protocol-facts,
+  .protocol-principles,
+  .protocol-experience .redline-spine,
+  .protocol-experience .redline-console,
+  .protocol-proof-copy,
+  .protocol-live-chapter > .rounded-2xl {
+    border-width: 1px !important;
+    border-color: rgba(91, 117, 155, .44) !important;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, .22), inset 0 1px rgba(255, 255, 255, .025) !important;
+  }
+
+  .world-feature,
+  .lab-workspace,
+  .protocol-chapter-nav.protocol-chapter-index,
+  .protocol-principles,
+  .protocol-experience .redline-spine,
+  .protocol-experience .redline-console,
+  .protocol-live-chapter > .rounded-2xl {
+    border-radius: 8px !important;
+  }
+
+  .protocol-story .protocol-facts {
+    border-radius: 0 0 8px 8px !important;
+  }
+
+  .world-tabs button {
+    border-left-width: 2px;
+  }
+
+  .protocol-chapter-heading {
+    padding-left: 16px;
+    border-left-width: 2px;
+  }
+
+  .protocol-proof-copy {
+    border-radius: 6px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .18), inset 0 1px rgba(255, 255, 255, .02) !important;
+  }
+
+  .protocol-chapter::before {
+    opacity: .62;
+  }
+}
+
+@media (min-width: 2000px) {
+  .protocol-experience {
+    --protocol-rail: clamp(320px, 17vw, 390px);
+  }
+
+  .protocol-story {
+    width: calc(100% - 80px);
+  }
+
+  .world-feature {
+    min-height: 590px;
+  }
+
+  .lab-workspace {
+    grid-template-columns: minmax(360px, .62fr) minmax(0, 1.38fr);
+  }
+}
+
+/* Four-chapter composition
+   Each chapter has a distinct silhouette, but every one shares the same
+   number, eyebrow, body and continuation rhythm. */
+.protocol-chapter-heading-copy {
+  min-width: 0;
+}
+
+.protocol-chapter-number {
+  color: rgba(223, 195, 140, .78) !important;
+  font: 650 clamp(36px, 4vw, 64px)/.9 'JetBrains Mono', monospace !important;
+  letter-spacing: -.08em !important;
+}
+
+.protocol-chapter-kicker {
+  display: block;
+  color: #dfc38c !important;
+  font: 650 10px/1.4 'JetBrains Mono', monospace !important;
+  letter-spacing: .16em !important;
+  text-transform: uppercase;
+}
+
+.protocol-chapter-heading-copy > p {
+  max-width: 430px;
+  margin: 18px 0 0;
+  color: #93a5bd;
+  font: 400 14px/1.75 'Inter', system-ui, sans-serif;
+}
+
+.protocol-chapter-body {
+  min-width: 0;
+}
+
+@media (min-width: 1181px) {
+  .protocol-chapter {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: clamp(18px, 1.55vw, 30px);
+    row-gap: 28px;
+    align-items: start;
+    padding-top: clamp(82px, 7vw, 124px);
+    border-top: 1px solid rgba(78, 103, 143, .36);
+  }
+
+  .protocol-chapter::before {
+    display: none;
+  }
+
+  .protocol-chapter-heading {
+    position: relative;
+    top: auto;
+    display: grid;
+    grid-template-columns: minmax(58px, .26fr) minmax(0, 1fr);
+    grid-column: 1 / span 4;
+    grid-row: 1;
+    gap: clamp(18px, 1.6vw, 28px);
+    margin: 0;
+    padding: 8px 0 0;
+    border: 0;
+  }
+
+  .protocol-chapter-heading h2 {
+    max-width: 420px;
+    margin: 16px 0 0;
+    font-size: clamp(29px, 2.3vw, 43px);
+    line-height: 1.06;
+  }
+
+  .protocol-chapter-number {
+    padding-top: 2px !important;
+    text-align: right;
+  }
+
+  .protocol-chapter > .protocol-chapter-body {
+    grid-column: 5 / -1;
+    grid-row: 1;
+    margin-top: 0;
+  }
+
+  .protocol-chapter > .protocol-next-chapter {
+    grid-column: 5 / -1;
+    grid-row: 2;
+    margin-top: 2px;
+  }
+
+  /* Enforcement is the anchor: headline above, pipeline across the canvas. */
+  .protocol-enforcement-chapter .protocol-chapter-heading {
+    grid-column: 1 / span 8;
+    grid-template-columns: minmax(68px, 1fr) minmax(0, 7fr);
+  }
+
+  .protocol-enforcement-chapter .protocol-chapter-heading h2 {
+    max-width: 820px;
+    font-size: clamp(34px, 3vw, 55px);
+  }
+
+  .protocol-enforcement-chapter .protocol-chapter-heading-copy > p {
+    max-width: 650px;
+  }
+
+  .protocol-enforcement-chapter > .protocol-enforcement-layout {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin-top: 12px;
+  }
+
+  .protocol-enforcement-chapter > .protocol-next-chapter {
+    grid-column: 7 / -1;
+    grid-row: 3;
+  }
+
+  /* Evidence pairs the explanation and live record inside the working side. */
+  .protocol-proof-layout {
+    grid-template-columns: minmax(250px, .48fr) minmax(0, 1.52fr);
+    gap: clamp(22px, 2.3vw, 46px);
+    align-items: stretch;
+  }
+
+  .protocol-proof-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(24px, 2.2vw, 38px);
+  }
+
+  .protocol-proof-copy p {
+    margin: 28px 0;
+  }
+
+  .protocol-proof-layout > .rounded-2xl {
+    min-height: 390px;
+  }
+
+  /* Ownership keeps the narrative light so current permissions own the page. */
+  .protocol-ownership-layout > .rounded-2xl {
+    min-height: 300px;
+  }
+
+  /* The final chapter reverses direction and lets the console lead. */
+  .protocol-console-chapter .protocol-chapter-heading {
+    grid-column: 9 / -1;
+  }
+
+  .protocol-console-chapter .protocol-chapter-body {
+    grid-column: 1 / span 8;
+  }
+
+  .protocol-console-chapter > .protocol-next-chapter {
+    grid-column: 1 / span 8;
+  }
+
+  .protocol-console-layout {
+    grid-template-columns: minmax(240px, .46fr) minmax(0, 1.54fr);
+    gap: clamp(22px, 2.3vw, 46px);
+  }
+
+  .protocol-console-copy {
+    padding: 24px 0 0;
+  }
+
+  .protocol-console-layout > .redline-console {
+    min-height: 440px;
+  }
+}
+
+@media (min-width: 1181px) and (max-width: 1500px) {
+  .protocol-chapter-heading {
+    grid-column: 1 / span 5;
+  }
+
+  .protocol-chapter > .protocol-chapter-body,
+  .protocol-chapter > .protocol-next-chapter {
+    grid-column: 6 / -1;
+  }
+
+  .protocol-console-chapter .protocol-chapter-heading {
+    grid-column: 9 / -1;
+  }
+
+  .protocol-console-chapter .protocol-chapter-body,
+  .protocol-console-chapter > .protocol-next-chapter {
+    grid-column: 1 / span 8;
+  }
+
+  .protocol-proof-layout,
+  .protocol-console-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1180px) {
+  .protocol-chapter-heading {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 18px;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .protocol-chapter-number {
+    font-size: 38px !important;
+    text-align: right;
+  }
+
+  .protocol-chapter-heading h2 {
+    margin-top: 12px;
+  }
+
+  .protocol-chapter-body {
+    margin-top: 28px;
+  }
+}
+
+@media (max-width: 600px) {
+  .protocol-chapter-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .protocol-chapter-number {
+    text-align: left;
+  }
+
+  .protocol-chapter-heading-copy > p {
+    font-size: 13px;
+  }
+}
+
+/* Pixel chapter stream
+   A numbered node and segmented data line connect all four sections. Titles
+   use the full row, preventing the narrow-column wrapping shown on wide PCs. */
+.protocol-enforcement-chapter { --chapter-rgb: 196, 150, 58; }
+.protocol-proof-chapter { --chapter-rgb: 76, 148, 224; }
+.protocol-live-chapter { --chapter-rgb: 35, 176, 137; }
+.protocol-console-chapter { --chapter-rgb: 151, 107, 232; }
+
+@media (min-width: 1181px) {
+  .protocol-chapter,
+  .protocol-enforcement-chapter,
+  .protocol-proof-chapter,
+  .protocol-live-chapter,
+  .protocol-console-chapter {
+    position: relative;
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    column-gap: clamp(22px, 2vw, 38px);
+    row-gap: 42px;
+    padding-top: clamp(88px, 7vw, 124px);
+    border-top: 0;
+  }
+
+  .protocol-chapter::after {
+    position: absolute;
+    z-index: 0;
+    top: calc(clamp(88px, 7vw, 124px) + 68px);
+    bottom: calc(clamp(88px, 7vw, 124px) * -1);
+    left: 31px;
+    width: 2px;
+    content: "";
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      180deg,
+      rgba(var(--chapter-rgb), .64) 0 12px,
+      rgba(var(--chapter-rgb), .12) 12px 16px,
+      transparent 16px 23px
+    );
+    box-shadow: 0 0 12px rgba(var(--chapter-rgb), .14);
+  }
+
+  .protocol-console-chapter::after {
+    bottom: 34px;
+    mask-image: linear-gradient(#000 0 78%, transparent);
+  }
+
+  .protocol-chapter > .protocol-chapter-heading,
+  .protocol-enforcement-chapter > .protocol-chapter-heading,
+  .protocol-console-chapter > .protocol-chapter-heading {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    grid-column: 1 / -1;
+    grid-row: 1;
+    gap: clamp(22px, 2vw, 38px);
+    align-items: start;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .protocol-chapter-number {
+    position: relative;
+    display: grid !important;
+    width: 64px;
+    height: 64px;
+    place-items: center;
+    padding: 0 !important;
+    border: 1px solid rgba(var(--chapter-rgb), .58);
+    border-radius: 5px;
+    color: rgb(var(--chapter-rgb)) !important;
+    background:
+      linear-gradient(135deg, rgba(var(--chapter-rgb), .14), rgba(var(--chapter-rgb), .035)),
+      #0b1526;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, .22), inset 0 1px rgba(255, 255, 255, .035);
+    font: 680 25px/1 'JetBrains Mono', monospace !important;
+    letter-spacing: -.08em !important;
+    text-align: center;
+  }
+
+  .protocol-chapter-number::after {
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    width: 8px;
+    height: 8px;
+    border: 2px solid rgb(var(--chapter-rgb));
+    border-radius: 1px;
+    content: "";
+    background: #07101e;
+  }
+
+  .protocol-chapter-heading-copy {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(240px, .30fr) minmax(0, .70fr);
+    grid-template-rows: auto auto;
+    gap: 12px clamp(32px, 4vw, 76px);
+    min-width: 0;
+    padding: 3px 0 32px;
+  }
+
+  .protocol-chapter-heading-copy::after {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    content: "";
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(var(--chapter-rgb), .70) 0 20px,
+      rgba(var(--chapter-rgb), .16) 20px 25px,
+      transparent 25px 34px
+    );
+    mask-image: linear-gradient(90deg, #000, #000 72%, transparent 100%);
+  }
+
+  .protocol-chapter-kicker {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    color: rgb(var(--chapter-rgb)) !important;
+    line-height: 1.55 !important;
+  }
+
+  .protocol-chapter-heading-copy > p {
+    grid-column: 1;
+    grid-row: 2;
+    max-width: 390px;
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .protocol-chapter-heading h2,
+  .protocol-enforcement-chapter .protocol-chapter-heading h2,
+  .protocol-console-chapter .protocol-chapter-heading h2 {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    width: 100%;
+    max-width: 1050px;
+    min-width: 0;
+    margin: 0;
+    font-size: clamp(34px, 2.7vw, 54px);
+    font-weight: 660;
+    line-height: 1.08;
+    letter-spacing: -.048em;
+    overflow-wrap: normal;
+    word-break: normal;
+    text-wrap: balance;
+  }
+
+  .protocol-chapter > .protocol-chapter-body,
+  .protocol-enforcement-chapter > .protocol-enforcement-layout,
+  .protocol-console-chapter > .protocol-chapter-body {
+    position: relative;
+    z-index: 1;
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+    margin: 0;
+  }
+
+  .protocol-chapter > .protocol-next-chapter,
+  .protocol-enforcement-chapter > .protocol-next-chapter,
+  .protocol-console-chapter > .protocol-next-chapter {
+    grid-column: 2;
+    grid-row: 3;
+    margin: 0 0 0 auto;
+    border-color: rgba(var(--chapter-rgb), .34);
+    color: rgb(var(--chapter-rgb));
+    background: rgba(var(--chapter-rgb), .055);
+  }
+
+  .protocol-chapter > .protocol-next-chapter:hover,
+  .protocol-chapter > .protocol-next-chapter:focus-visible {
+    border-color: rgba(var(--chapter-rgb), .65);
+    color: #f2eee5;
+    background: rgba(var(--chapter-rgb), .11);
+  }
+
+  .protocol-proof-layout,
+  .protocol-console-layout {
+    grid-template-columns: minmax(280px, .42fr) minmax(0, 1.58fr);
+  }
+
+  .protocol-live-chapter {
+    padding-bottom: 0;
+  }
+}
+
+@media (min-width: 1181px) and (max-width: 1500px) {
+  .protocol-chapter-heading-copy {
+    grid-template-columns: minmax(210px, .34fr) minmax(0, .66fr);
+    gap: 10px 32px;
+  }
+
+  .protocol-chapter-heading h2,
+  .protocol-enforcement-chapter .protocol-chapter-heading h2,
+  .protocol-console-chapter .protocol-chapter-heading h2 {
+    font-size: clamp(31px, 2.8vw, 43px);
+  }
+
+  .protocol-proof-layout,
+  .protocol-console-layout {
+    grid-template-columns: minmax(240px, .48fr) minmax(0, 1.52fr);
+  }
+}
+
+@media (max-width: 1180px) {
+  .protocol-chapter {
+    position: relative;
+  }
+
+  .protocol-chapter-heading {
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .protocol-chapter-number {
+    display: grid !important;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    padding: 0 !important;
+    border: 1px solid rgba(var(--chapter-rgb), .55);
+    border-radius: 4px;
+    color: rgb(var(--chapter-rgb)) !important;
+    background: rgba(var(--chapter-rgb), .07);
+    font-size: 20px !important;
+  }
+
+  .protocol-chapter-heading-copy {
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(var(--chapter-rgb), .34);
+  }
+
+  .protocol-chapter-kicker {
+    color: rgb(var(--chapter-rgb)) !important;
+  }
+
+  .protocol-chapter-heading-copy > p {
+    max-width: 620px;
+  }
+}
+
+/* Edge-led 3D stream
+   Headings begin at the left rail, supporting copy balances the far right,
+   and the flat dashed separator becomes a layered perspective data channel. */
+.protocol-story {
+  box-sizing: border-box !important;
+}
+
+@media (min-width: 1181px) {
+  .protocol-story {
+    width: 100% !important;
+    max-width: none !important;
+    margin-inline: 0 !important;
+    padding-right: clamp(24px, 2.4vw, 52px) !important;
+    padding-left: clamp(24px, 2.4vw, 52px) !important;
+  }
+
+  .protocol-chapter-heading-copy {
+    grid-template-columns: minmax(0, 1fr) minmax(290px, .34fr);
+    grid-template-rows: auto auto;
+    gap: 12px clamp(36px, 5vw, 96px);
+    padding-bottom: 52px;
+    perspective: 900px;
+  }
+
+  .protocol-chapter-kicker {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+  }
+
+  .protocol-chapter-heading h2,
+  .protocol-enforcement-chapter .protocol-chapter-heading h2,
+  .protocol-console-chapter .protocol-chapter-heading h2 {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+    max-width: 1040px;
+    margin-top: 2px;
+    text-align: left;
+  }
+
+  .protocol-chapter-heading-copy > p {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    max-width: 430px;
+    margin: 0;
+    padding: 18px 0 18px clamp(20px, 2vw, 38px);
+    border-left: 1px solid rgba(var(--chapter-rgb), .30);
+  }
+
+  .protocol-chapter-heading-copy::after {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 28px;
+    border: 0;
+    clip-path: polygon(0 38%, 100% 0, 100% 64%, 0 100%);
+    background:
+      repeating-linear-gradient(90deg, rgba(var(--chapter-rgb), .46) 0 18px, transparent 18px 27px),
+      linear-gradient(180deg,
+        transparent 0 18%,
+        rgba(var(--chapter-rgb), .12) 18% 27%,
+        rgba(var(--chapter-rgb), .72) 44% 50%,
+        rgba(230, 243, 255, .52) 50% 54%,
+        rgba(var(--chapter-rgb), .19) 54% 72%,
+        transparent 72% 100%);
+    box-shadow: 0 8px 18px rgba(var(--chapter-rgb), .12);
+    mask-image: linear-gradient(90deg, #000 0 82%, transparent 100%);
+    transform: rotateX(58deg) translateZ(1px);
+    transform-origin: center bottom;
+  }
+
+  .protocol-chapter-heading-copy::before {
+    position: absolute;
+    z-index: 3;
+    bottom: 8px;
+    left: 0;
+    width: 11px;
+    height: 11px;
+    border: 1px solid rgba(236, 246, 255, .82);
+    border-radius: 2px;
+    content: "";
+    background: rgb(var(--chapter-rgb));
+    box-shadow: 0 0 8px rgba(var(--chapter-rgb), .95), 0 0 22px rgba(var(--chapter-rgb), .65);
+    transform: rotate(45deg);
+    animation: protocol-flow-packet 5.4s linear infinite;
+  }
+
+  .protocol-proof-chapter .protocol-chapter-heading-copy::before { animation-delay: -1.35s; }
+  .protocol-live-chapter .protocol-chapter-heading-copy::before { animation-delay: -2.7s; }
+  .protocol-console-chapter .protocol-chapter-heading-copy::before { animation-delay: -4.05s; }
+
+  .protocol-chapter::after {
+    top: calc(clamp(88px, 7vw, 124px) + 62px);
+    bottom: calc(clamp(88px, 7vw, 124px) * -1);
+    left: 27px;
+    width: 12px;
+    border: 0;
+    background:
+      linear-gradient(90deg,
+        transparent 0 8%,
+        rgba(var(--chapter-rgb), .12) 8% 24%,
+        rgba(var(--chapter-rgb), .74) 42% 50%,
+        rgba(230, 243, 255, .46) 50% 56%,
+        rgba(var(--chapter-rgb), .18) 56% 78%,
+        transparent 78% 100%),
+      repeating-linear-gradient(180deg, rgba(var(--chapter-rgb), .38) 0 13px, transparent 13px 21px);
+    box-shadow: 0 0 16px rgba(var(--chapter-rgb), .16);
+    transform: perspective(460px) rotateY(-34deg);
+    transform-origin: center top;
+  }
+
+  .protocol-chapter > .protocol-chapter-body,
+  .protocol-enforcement-chapter > .protocol-enforcement-layout,
+  .protocol-console-chapter > .protocol-chapter-body,
+  .protocol-chapter > .protocol-next-chapter {
+    padding-left: clamp(4px, .6vw, 12px);
+  }
+}
+
+@keyframes protocol-flow-packet {
+  0% { left: 0; opacity: 0; transform: rotate(45deg) scale(.65); }
+  6% { opacity: 1; }
+  48% { transform: rotate(225deg) scale(1); }
+  92% { opacity: 1; }
+  100% { left: calc(100% - 12px); opacity: 0; transform: rotate(405deg) scale(.65); }
+}
+
+@media (min-width: 1181px) and (max-width: 1500px) {
+  .protocol-chapter-heading-copy {
+    grid-template-columns: minmax(0, 1fr) minmax(250px, .38fr);
+    gap: 10px 38px;
+  }
+
+  .protocol-chapter-heading-copy > p {
+    padding-left: 22px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .protocol-story {
+    width: 100% !important;
+    max-width: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .protocol-chapter-heading-copy::before {
+    animation: none;
+    left: 18%;
+  }
+}
+
+/* Full-bleed chapter stream
+   The story wrapper was wide, but legacy chapter widths still capped each
+   section at 1400px. Own width at the actual sections and use one continuous
+   channel colour so 01 follows the exact same rail language as 02–04. */
+.protocol-experience {
+  --protocol-stream-rgb: 86, 166, 220;
+}
+
+@media (min-width: 1181px) {
+  .protocol-story > .protocol-chapter,
+  .protocol-story > .protocol-principles,
+  .protocol-story > .protocol-footer {
+    width: 100% !important;
+    max-width: none !important;
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+  }
+
+  .protocol-story > .protocol-chapter {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .protocol-chapter-heading-copy::after {
+    background:
+      repeating-linear-gradient(90deg, rgba(var(--protocol-stream-rgb), .46) 0 18px, transparent 18px 27px),
+      linear-gradient(180deg,
+        transparent 0 18%,
+        rgba(var(--protocol-stream-rgb), .12) 18% 27%,
+        rgba(var(--protocol-stream-rgb), .72) 44% 50%,
+        rgba(230, 243, 255, .52) 50% 54%,
+        rgba(var(--protocol-stream-rgb), .19) 54% 72%,
+        transparent 72% 100%);
+    box-shadow: 0 8px 18px rgba(var(--protocol-stream-rgb), .12);
+  }
+
+  .protocol-chapter-heading-copy::before {
+    background: rgb(var(--protocol-stream-rgb));
+    box-shadow:
+      0 0 8px rgba(var(--protocol-stream-rgb), .95),
+      0 0 22px rgba(var(--protocol-stream-rgb), .65);
+  }
+
+  .protocol-chapter::after,
+  .protocol-enforcement-chapter::after,
+  .protocol-proof-chapter::after,
+  .protocol-live-chapter::after,
+  .protocol-console-chapter::after {
+    top: calc(clamp(88px, 7vw, 124px) + 62px);
+    bottom: calc(clamp(88px, 7vw, 124px) * -1);
+    left: 27px;
+    width: 12px;
+    background:
+      linear-gradient(90deg,
+        transparent 0 8%,
+        rgba(var(--protocol-stream-rgb), .12) 8% 24%,
+        rgba(var(--protocol-stream-rgb), .74) 42% 50%,
+        rgba(230, 243, 255, .46) 50% 56%,
+        rgba(var(--protocol-stream-rgb), .18) 56% 78%,
+        transparent 78% 100%),
+      repeating-linear-gradient(180deg, rgba(var(--protocol-stream-rgb), .38) 0 13px, transparent 13px 21px);
+    box-shadow: 0 0 16px rgba(var(--protocol-stream-rgb), .16);
+    transform: perspective(460px) rotateY(-34deg);
+  }
+
+  .protocol-console-chapter::after {
+    bottom: 34px;
+  }
+
+  .protocol-chapter > .protocol-chapter-body,
+  .protocol-enforcement-chapter > .protocol-enforcement-layout,
+  .protocol-console-chapter > .protocol-chapter-body {
+    max-width: none;
+  }
+
+  .protocol-experience .redline-spine,
+  .protocol-proof-layout,
+  .protocol-ownership-layout,
+  .protocol-console-layout {
+    width: 100%;
+    max-width: none;
+  }
+
+  .protocol-chapter-heading-copy {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  #protocol-worlds {
+    scroll-margin-top: calc(var(--app-header-height) + 12px);
+  }
+}

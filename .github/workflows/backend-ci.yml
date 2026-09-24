@@ -1,0 +1,40 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", "programs/**", ".github/workflows/backend-ci.yml"]
+  pull_request:
+    paths: ["backend/**", "programs/**"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: postgresql://unused:unused@localhost:5432/unused
+      CHAIN: mock
+      REDLINE_PROGRAM_ID: Fj7MV8Z2a3RdH4W8VF2XKfWAsWHT3jxhoqGMcmb4WbS4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      # npm install (not ci): the lock is generated on npm 11 and older npm
+      # rejects its optional-peer layout for rpc-websockets/utf-8-validate.
+      - run: npm install --no-audit --no-fund
+      - run: npx prisma generate
+      - run: npm run typecheck
+      - name: Unit tests (policy engine, Anchor wire format, transient errors)
+        run: npm test
+      - name: Fetch the deployed program binary from Devnet
+        run: npm run program:fetch
+        continue-on-error: true
+      - name: On-chain gate tests in LiteSVM (real Devnet build)
+        if: hashFiles('backend/target/deploy/redline_guardrails.so') != ''
+        run: npm run test:onchain

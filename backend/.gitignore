@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+*.db
+*.db-journal
+executor.json
+owner.json
+ops-destination.json
+wallet-*.json
+target/

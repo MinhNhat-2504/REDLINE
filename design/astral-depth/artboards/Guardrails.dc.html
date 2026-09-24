@@ -1,0 +1,543 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+  <style>
+:root{
+  --bg:#080d19;--bg-deep:#050914;--surface:#121c30;--surface-hi:#17243a;--inset:#0c1425;
+  --line:#2d3b53;--line-strong:#43516a;--text:#f2eee5;--text-2:#c4cddd;--muted:#9fadc3;--dim:#7f8ea6;
+  --gold:#dfc38c;--gold-hi:#eed5a3;--gold-deep:#b8985a;--info:#8dcced;--ok:#85dbc0;--bad:#ff93a4;--warn:#f1c678;
+  --ease:cubic-bezier(.16,1,.3,1);
+  --sh-1: inset 0 1px 0 rgba(255,255,255,.05), 0 1px 2px rgba(0,0,0,.45), 0 10px 24px -10px rgba(0,0,0,.55);
+  --sh-2: inset 0 1px 0 rgba(255,255,255,.06), 0 14px 34px -12px rgba(0,0,0,.65), 0 34px 70px -24px rgba(0,0,0,.6);
+  --sh-3: inset 0 1px 0 rgba(255,255,255,.09), 0 26px 54px -14px rgba(0,0,0,.72), 0 70px 130px -34px rgba(0,0,0,.65), 0 0 70px -22px rgba(223,195,140,.28);
+  --sh-gold: 0 8px 26px -8px rgba(223,195,140,.55), 0 0 0 1px rgba(239,216,170,.7) inset;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:Georgia,'Times New Roman',serif;
+  --pg:223,195,140;
+}
+*{box-sizing:border-box}
+.sc-interp{font:inherit!important;color:inherit!important;letter-spacing:inherit!important;display:inline}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--gold-hi);text-decoration:none}a:hover{color:#fff}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit;font-size:inherit}
+input,select{font-family:inherit}
+.mono{font-family:var(--mono)}
+.serif{font-family:var(--serif);font-style:italic;font-weight:400}
+.app{position:relative;width:1440px;min-height:100%;background:
+  radial-gradient(ellipse 70% 40% at 88% -6%, rgba(var(--pg),.14), transparent 60%),
+  radial-gradient(ellipse 50% 40% at 0% 100%, rgba(141,204,237,.07), transparent 60%),
+  linear-gradient(rgba(105,139,188,.045) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(105,139,188,.045) 1px, transparent 1px),
+  var(--bg);
+  background-size:auto,auto,48px 48px,48px 48px,auto;overflow:hidden}
+/* ---------- header ---------- */
+.hdr{position:relative;z-index:20;display:flex;align-items:center;gap:20px;height:64px;padding:0 32px;
+  background:linear-gradient(90deg, rgba(19,31,51,.96), rgba(8,15,28,.96));border-bottom:1px solid rgba(92,112,143,.42);
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 10px 30px -14px rgba(0,0,0,.8)}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;letter-spacing:.32em;color:var(--text)}
+.emblem{width:30px;height:30px;display:grid;place-items:center;border-radius:8px;color:var(--gold);
+  background:linear-gradient(160deg,#1b2c45,#0d172a);border:1px solid rgba(223,195,140,.45);
+  box-shadow:0 0 0 3px rgba(223,195,140,.08), 0 6px 14px -6px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.08)}
+.nav{display:flex;align-items:center;gap:2px;margin-left:12px}
+.nav button{position:relative;padding:8px 9px;border-radius:6px;font-size:12px;color:#bac6d9;letter-spacing:.01em;transition:color .2s,background .2s}
+.nav button:hover{color:var(--gold-hi);background:rgba(92,130,188,.10)}
+.nav button[aria-current="page"]{color:var(--gold-hi)}
+.nav button[aria-current="page"]::after{content:"";position:absolute;left:50%;bottom:-1px;width:6px;height:6px;margin-left:-3px;transform:rotate(45deg);background:var(--gold);box-shadow:0 0 12px var(--gold)}
+.tools{display:flex;align-items:center;gap:10px;margin-left:auto}
+.tool{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:6px;font-size:12px;color:#b5c4d9;
+  background:#152038;border:1px solid var(--line);box-shadow:var(--sh-1);transition:transform .2s var(--ease),box-shadow .2s;white-space:nowrap}
+.tool:hover{transform:translateY(-1px);box-shadow:var(--sh-2);color:var(--gold-hi);border-color:#69788c}
+.tool kbd{font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:4px;color:#d9d3c4;background:var(--inset);border:1px solid #3c4b63}
+.netpill{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:#93a9c4}
+.netpill i{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);animation:pulse 2.4s infinite}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:40px;padding:0 18px;border-radius:6px;font-size:12.5px;font-weight:600;letter-spacing:.01em;
+  transition:transform .22s var(--ease),box-shadow .22s var(--ease),background .2s;white-space:nowrap}
+.btn{position:relative;overflow:hidden;transform-style:preserve-3d}
+.btn::after{content:"";position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.55);opacity:0;transform:translate(-50%,-50%) scale(1);pointer-events:none}
+.btn:active::after{animation:ripple .55s var(--ease)}
+@keyframes ripple{0%{opacity:.6;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(28)}}
+.btn-gold{color:#101827;background:linear-gradient(180deg,#f3e0b5,#dfc38c 55%,#cdb077);border-bottom:0;box-shadow:0 5px 0 0 #8f7340,0 6px 0 0 rgba(0,0,0,.35),0 16px 30px -12px rgba(223,195,140,.55),inset 0 1px 0 rgba(255,255,255,.7)}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 7px 0 0 #8f7340,0 8px 0 0 rgba(0,0,0,.35),0 22px 40px -10px rgba(223,195,140,.7),inset 0 1px 0 rgba(255,255,255,.8)}
+.btn-gold:active{transform:translateY(4px);box-shadow:0 1px 0 0 #8f7340,0 2px 0 0 rgba(0,0,0,.35),0 6px 14px -8px rgba(223,195,140,.5),inset 0 2px 6px rgba(0,0,0,.25);transition-duration:.06s}
+.btn-ghost{color:var(--text-2);background:rgba(23,36,58,.85);border:1px solid var(--line-strong);box-shadow:0 3px 0 0 #0a1121,var(--sh-1)}
+.btn-ghost:hover{color:var(--gold-hi);border-color:#69788c;transform:translateY(-1px);box-shadow:0 4px 0 0 #0a1121,var(--sh-2)}
+.btn-ghost:active{transform:translateY(3px);box-shadow:0 0 0 0 #0a1121,inset 0 2px 6px rgba(0,0,0,.5);transition-duration:.06s}
+.btn-danger{color:var(--bad);background:rgba(255,147,164,.06);border:1px solid rgba(255,147,164,.4);box-shadow:0 3px 0 0 rgba(120,40,55,.9)}
+.btn-danger:hover{background:rgba(255,147,164,.14);transform:translateY(-1px);box-shadow:0 4px 0 0 rgba(120,40,55,.9),0 0 24px -6px rgba(255,147,164,.6)}
+.btn-danger:active{transform:translateY(3px);box-shadow:0 0 0 0 rgba(120,40,55,.9),inset 0 2px 6px rgba(0,0,0,.5);transition-duration:.06s}
+.btn-sm{height:32px;padding:0 12px;font-size:11.5px}
+.avatar-btn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#1b2c45,#0d172a);border:1px solid rgba(223,195,140,.45);box-shadow:var(--sh-1);perspective:300px;transition:all .25s var(--ease)}
+.avatar-btn:hover,.avatar-btn[aria-current="page"]{border-color:var(--gold);box-shadow:0 0 18px -4px rgba(223,195,140,.7)}
+.avatar-btn .av-vox{display:grid;place-items:center}
+/* ---------- page frame ---------- */
+.page{position:relative;width:1440px;padding:24px 32px 56px}
+.journey{display:grid;grid-template-columns:auto auto 1fr auto auto;align-items:center;gap:16px;height:52px;padding:0 10px 0 8px;margin:0 auto 20px;
+  border-radius:10px;background:rgba(15,25,43,.92);border:1px solid var(--line-strong);box-shadow:var(--sh-1)}
+.jbtn{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:6px;background:var(--surface-hi);border:1px solid var(--line-strong);color:var(--gold);font-size:11px;text-align:left;line-height:1.15}
+.jbtn small{display:block;font-family:var(--mono);font-size:8px;letter-spacing:.18em;color:var(--muted)}
+.jtitle{display:flex;align-items:center;gap:10px;padding-left:8px;border-left:1px solid var(--line)}
+.jtitle small{font-family:var(--mono);font-size:8px;letter-spacing:.2em;color:var(--muted);display:block}
+.jtitle b{font-size:13px;font-weight:600;color:var(--text)}
+.jtitle span.idx{font-family:var(--mono);font-size:12px;color:var(--gold)}
+.jtrack{display:flex;align-items:center;gap:6px;padding:0 20px}
+.jtrack i{flex:1;height:2px;background:rgba(var(--pg),.22);border-radius:2px;position:relative;overflow:hidden}
+.jtrack i.on{background:rgba(var(--pg),.95);box-shadow:0 0 14px rgba(var(--pg),.7)}
+.jtrack i.on::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:shimmer 2.6s linear infinite}
+.banner{position:relative;height:210px;border-radius:16px;overflow:hidden;border:1px solid var(--line-strong);box-shadow:var(--sh-2),10px 10px 0 0 rgba(var(--pg),.2);isolation:isolate;transform-style:preserve-3d;perspective:1200px}
+.banner .plx{position:absolute;inset:0;pointer-events:none;transition:transform .5s var(--ease)}
+.banner .cluster{position:absolute;right:250px;top:40px;display:flex;align-items:flex-end;gap:0;perspective:700px;transform-style:preserve-3d;transition:transform .5s var(--ease);z-index:2}
+.banner .cluster .vox{--vc:var(--pg);margin-right:-12px}
+.banner .cluster .vox:nth-child(2){--vc:141,204,237;margin-bottom:18px}
+.banner .cluster .vox:nth-child(3){--vc:133,219,192;margin-bottom:4px}
+.banner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 55%;filter:brightness(.6) saturate(.7);transform:scale(1.04);animation:drift 22s ease-in-out infinite alternate}
+.banner .wash{position:absolute;inset:0;background:linear-gradient(90deg,rgba(16,26,45,.98),rgba(16,26,45,.78) 42%,rgba(16,26,45,.12) 82%),linear-gradient(0deg,rgba(8,13,25,.6),transparent 40%)}
+.banner .corner{position:absolute;width:22px;height:22px;border:2px solid rgba(var(--pg),.9);filter:drop-shadow(0 0 8px rgba(var(--pg),.6))}
+.banner .corner.tl{top:14px;left:14px;border-right:0;border-bottom:0}.banner .corner.br{bottom:14px;right:14px;border-left:0;border-top:0}
+.banner .copy{position:absolute;left:36px;top:50%;transform:translateY(-50%);max-width:640px;z-index:2}
+.banner .eyebrow{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;color:rgb(var(--pg))}
+.banner h1{margin:10px 0 0;font-size:40px;line-height:1.05;letter-spacing:-.04em;font-weight:600;color:var(--text)}
+.banner h1 em{font-family:var(--serif);font-style:italic;font-weight:400;color:rgb(var(--pg))}
+.banner p{margin:12px 0 0;font-size:13.5px;line-height:1.65;color:#bcc9db;max-width:560px}
+.banner .glyph{position:absolute;right:48px;top:50%;width:76px;height:76px;transform:translateY(-50%) rotateX(calc(14deg + var(--gx,0deg))) rotateY(calc(-16deg + var(--gy,0deg)));transform-style:preserve-3d;display:grid;place-items:center;border-radius:14px;color:rgb(var(--pg));
+  background:linear-gradient(150deg,rgba(27,44,69,.95),rgba(13,23,42,.95));border:1px solid rgba(var(--pg),.55);
+  box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 30px 50px -18px rgba(0,0,0,.9),0 0 40px -10px rgba(var(--pg),.5);animation:float 6s ease-in-out infinite}
+.banner-water{position:absolute;left:0;right:0;bottom:-6px;z-index:1;opacity:.75}
+.banner .glyph-vox{position:absolute;right:140px;top:26px;perspective:500px;animation:float2 7s ease-in-out infinite;z-index:2}
+@keyframes float2{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.banner .glyph::after{content:"";position:absolute;inset:8px;border-radius:8px;border:1px dashed rgba(var(--pg),.35)}
+.topline{display:grid;grid-template-columns:auto minmax(0,1fr) 220px auto;align-items:center;gap:26px;padding:6px 4px 18px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+.tl-id{display:flex;align-items:center;gap:14px}
+.tl-id .tl-vox{perspective:400px;display:grid;place-items:center;width:34px;height:34px}
+.tl-id .tl-vox .vox{--vc:var(--pg)}
+.tl-id small{font:9.5px var(--mono);letter-spacing:.22em;color:rgb(var(--pg))}
+.tl-id b{display:block;font-size:30px;line-height:1;letter-spacing:-.04em;font-weight:600;color:var(--text)}
+.topline p{margin:0;font-size:12.5px;line-height:1.6;color:#aebed3;max-width:560px}
+.tl-dots{display:flex;gap:5px}.tl-dots i{flex:1;height:3px;border-radius:2px;background:rgba(var(--pg),.2)}.tl-dots i.on{background:rgb(var(--pg));box-shadow:0 0 12px rgba(var(--pg),.7)}
+.tl-nav{display:flex;gap:8px}
+/* generic transaction fx */
+.coin{position:absolute;z-index:9;pointer-events:none;perspective:600px}
+.coin .vox{--vs:20px;--vc:223,195,140}
+@keyframes shake{0%,100%{translate:0 0}20%{translate:-6px 0}40%{translate:6px 0}60%{translate:-4px 0}80%{translate:4px 0}}
+@keyframes dropIn{0%{opacity:0;transform:translateY(-60px) scale(.9)}60%{opacity:1;transform:translateY(6px)}100%{transform:none}}
+@keyframes popIn{0%{opacity:0;transform:translateY(-14px) scale(.96)}100%{opacity:1;transform:none}}
+@keyframes burst{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--bx),var(--by)) scale(.4) rotate(120deg)}}
+.burst{position:absolute;inset:0;pointer-events:none}
+.burst i{position:absolute;left:50%;top:50%;width:8px;height:8px;background:var(--gold);box-shadow:0 0 10px var(--gold);animation:burst .9s var(--ease) both}
+/* ---------- surfaces ---------- */
+.panel{position:relative;background:linear-gradient(180deg,rgba(23,36,58,.55),rgba(18,28,48,.9)),var(--surface);border:1px solid var(--line-strong);border-radius:14px;box-shadow:var(--sh-2),8px 8px 0 -1px rgba(var(--pg),.13),8px 8px 0 0 rgba(var(--pg),.22);transform-style:preserve-3d;perspective:1400px;transition:transform .5s var(--ease),box-shadow .5s var(--ease),border-color .3s}
+.panel:hover{transform:translateY(-3px);box-shadow:var(--sh-3),10px 10px 0 -1px rgba(var(--pg),.16),10px 10px 0 0 rgba(var(--pg),.3);border-color:#69788c}
+.panel::before{content:"";position:absolute;left:24px;right:24px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(var(--pg),.55),transparent);pointer-events:none}
+.panel-3d{transform-style:preserve-3d;transition:transform .5s var(--ease),box-shadow .5s var(--ease),border-color .3s}
+.panel-3d:hover{transform:translateY(-4px) rotateX(1.2deg);box-shadow:var(--sh-3),10px 10px 0 -1px rgba(var(--pg),.16),10px 10px 0 0 rgba(var(--pg),.3);border-color:#69788c}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 22px;border-bottom:1px solid var(--line)}
+.ph h3{margin:0;font-size:14px;font-weight:600;color:var(--text)}
+.ph .eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--gold)}
+.pb{padding:20px 22px}
+.inset{background:var(--inset);border:1px solid var(--line);border-radius:10px;box-shadow:inset 0 2px 8px rgba(0,0,0,.45)}
+.chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:5px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;border:1px solid}
+.chip-ok{color:var(--ok);background:rgba(133,219,192,.1);border-color:rgba(133,219,192,.4)}
+.chip-bad{color:var(--bad);background:rgba(255,147,164,.1);border-color:rgba(255,147,164,.4)}
+.chip-gold{color:var(--gold-hi);background:rgba(223,195,140,.1);border-color:rgba(223,195,140,.4)}
+.chip-info{color:var(--info);background:rgba(141,204,237,.1);border-color:rgba(141,204,237,.4)}
+.chip-dim{color:var(--muted);background:rgba(159,173,195,.08);border-color:rgba(159,173,195,.3)}
+.kv{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid rgba(45,59,83,.7);font-size:12.5px}
+.kv:last-child{border-bottom:0}
+.kv span{color:var(--text-2)}.kv b{font-family:var(--mono);font-weight:500;color:var(--gold-hi)}
+.kv b.info{color:var(--info)}.kv b.ok{color:var(--ok)}.kv b.bad{color:var(--bad)}.kv b.warn{color:var(--warn)}
+.bar{height:6px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+.bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#8dcced,#85dbc0 60%,#dfc38c);box-shadow:0 0 12px rgba(133,219,192,.6);position:relative;overflow:hidden}
+.bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);animation:shimmer 2.8s linear infinite}
+.bar.bad i{background:linear-gradient(90deg,#ff93a4,#f1c678);box-shadow:0 0 12px rgba(255,147,164,.6)}
+.field{display:block;font-size:11.5px;color:var(--text-2);margin-bottom:14px}
+.field .in{display:flex;align-items:center;height:42px;margin-top:7px;padding:0 14px;border-radius:8px;color:var(--text);font-family:var(--mono);font-size:13px;background:var(--inset);border:1px solid #3a4a65;box-shadow:inset 0 2px 8px rgba(0,0,0,.5)}
+.field .in.focus{border-color:var(--gold);box-shadow:inset 0 2px 8px rgba(0,0,0,.5),0 0 0 3px rgba(223,195,140,.18)}
+.field .in .caret{width:1px;height:16px;background:var(--gold-hi);margin-left:2px;animation:blink 1s steps(1) infinite}
+.pill-row{display:flex;flex-wrap:wrap;gap:8px}
+.pill{height:34px;padding:0 14px;border-radius:7px;display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;color:#b8c5d8;background:rgba(23,36,58,.8);border:1px solid #34435c;box-shadow:var(--sh-1);transition:all .22s var(--ease)}
+.pill:hover{transform:translateY(-1px);border-color:#69788c;color:var(--gold-hi)}
+.pill:active,.mint:active,.tool:active,.step:active,.dur button:active{transform:translateY(2px) scale(.98);transition-duration:.06s}
+.pill[aria-pressed="true"]{color:var(--gold-hi);background:rgba(223,195,140,.1);border-color:#d9bb81;box-shadow:0 0 18px -6px rgba(223,195,140,.6),var(--sh-1)}
+.eyebrow{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;color:var(--gold)}
+.eyebrow::before{content:"";width:22px;height:1px;background:var(--gold)}
+.h2{margin:14px 0 0;font-size:38px;line-height:1.1;letter-spacing:-.045em;font-weight:500;color:var(--text)}
+.h2 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--gold)}
+.lede{color:#aebed3;font-size:13.5px;line-height:1.8;max-width:520px}
+/* ---------- gates component (3 sizes) ---------- */
+.gate{position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:10px;padding:12px 10px;border-radius:9px;text-align:left;color:#c4cddd;
+  background:linear-gradient(160deg,#1b2c45,#111d31);border:1px solid var(--line-strong);transform-style:preserve-3d;
+  box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 12px 24px -12px rgba(0,0,0,.9);transition:transform .45s var(--ease),box-shadow .45s var(--ease),border-color .3s}
+.gate .gi{font-family:var(--mono);font-size:11px;color:var(--gold)}
+.gate .gl{font-size:11px;line-height:1.3;color:#c4cddd}
+.gate .gc{font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;color:var(--dim);word-break:break-all}
+.gate .gs{position:absolute;top:10px;right:10px;width:16px;height:16px;border-radius:50%;border:1px solid var(--line-strong);display:grid;place-items:center}
+.gate[data-state="passed"]{border-color:rgba(133,219,192,.55);color:var(--ok);background:linear-gradient(160deg,rgba(133,219,192,.14),#111d31)}
+.gate[data-state="passed"] .gs{border-color:var(--ok);background:rgba(133,219,192,.15);box-shadow:0 0 12px rgba(133,219,192,.6)}
+.gate[data-state="blocked"]{border-color:rgba(255,147,164,.7);color:var(--bad);background:linear-gradient(160deg,rgba(255,147,164,.18),#111d31);box-shadow:0 0 0 1px rgba(255,147,164,.3),0 0 30px -6px rgba(255,147,164,.7),0 18px 30px -14px rgba(0,0,0,.9);transform:translateZ(18px) scale(1.04)}
+.gate[data-state="blocked"] .gs{border-color:var(--bad);background:rgba(255,147,164,.2);box-shadow:0 0 12px rgba(255,147,164,.7)}
+.gate[data-state="skipped"]{opacity:.45}
+.gate[data-state="idle"]:hover{transform:translateZ(14px) translateY(-3px);border-color:rgba(223,195,140,.6);box-shadow:0 0 0 1px rgba(223,195,140,.2),0 22px 36px -14px rgba(0,0,0,.95)}
+.gate-badge{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:5px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;border:1px solid}
+.gate-badge i{display:inline-grid;place-items:center;width:14px;height:14px;font-size:8px;border-radius:3px;transform:skewY(-8deg);background:rgba(255,255,255,.06)}
+.gate-badge.ok{color:var(--ok);border-color:rgba(133,219,192,.45);background:rgba(133,219,192,.08)}
+.gate-badge.bad{color:var(--bad);border-color:rgba(255,147,164,.5);background:rgba(255,147,164,.1)}
+.gate-dots{display:flex;gap:4px}
+.gate-dots i{width:18px;height:20px;display:grid;place-items:center;font-family:var(--mono);font-size:9px;border-radius:3px;border:1px solid var(--line-strong);color:var(--muted);transform:skewY(-8deg)}
+.gate-dots i.ok{color:var(--ok);border-color:rgba(133,219,192,.5);background:rgba(133,219,192,.1)}
+.gate-dots i.bad{color:var(--bad);border-color:rgba(255,147,164,.6);background:rgba(255,147,164,.14);box-shadow:0 0 10px rgba(255,147,164,.5)}
+.kv,.log-row,.tbl-row,.rank,.arow,.grant,.dest,.mint,.step{transition:transform .35s var(--ease),background .25s,box-shadow .35s var(--ease)}
+.log-row:hover,.tbl-row:hover,.rank:hover,.grant:hover{transform:translateZ(14px) translateX(4px)}
+.inset,.fact,.stat,.hash{transform:translateZ(-6px)}
+/* ---------- 3D motifs: voxel · chain · water · pixel shards ---------- */
+.vox{position:relative;width:var(--vs,56px);height:var(--vs,56px);transform-style:preserve-3d;transform:rotateX(-26deg) rotateY(42deg);--vc:223,195,140}
+.vox i{position:absolute;inset:0;border:1px solid rgba(var(--vc),.55);background:linear-gradient(160deg,rgba(var(--vc),.32),rgba(var(--vc),.08));box-shadow:inset 0 0 18px rgba(var(--vc),.12)}
+.vox .f{transform:translateZ(calc(var(--vs,56px) / 2))}
+.vox .r{transform:rotateY(90deg) translateZ(calc(var(--vs,56px) / 2));background:linear-gradient(160deg,rgba(var(--vc),.14),rgba(var(--vc),.04))}
+.vox .t{transform:rotateX(90deg) translateZ(calc(var(--vs,56px) / 2));background:linear-gradient(160deg,rgba(var(--vc),.5),rgba(var(--vc),.2))}
+.vox .lb{position:absolute;inset:0;display:grid;place-items:center;transform:translateZ(calc(var(--vs,56px) / 2 + 1px));font:10px var(--mono);color:rgb(var(--vc));text-shadow:0 0 10px rgba(var(--vc),.8)}
+.vox-ok{--vc:133,219,192}.vox-bad{--vc:255,147,164}.vox-info{--vc:141,204,237}
+.vox-shadow{position:absolute;left:50%;bottom:-18px;width:120%;height:14px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.7),transparent 70%);filter:blur(3px)}
+.chain{display:flex;align-items:center;gap:0;transform-style:preserve-3d}
+.chain i{width:30px;height:14px;border:2px solid rgba(223,195,140,.85);border-radius:8px;flex:none;margin-right:-8px;box-shadow:0 0 10px rgba(223,195,140,.25),inset 0 0 6px rgba(223,195,140,.15);animation:chainGlow 3.2s ease-in-out infinite;animation-delay:calc(var(--k,0) * .18s)}
+.chain i:nth-child(even){transform:rotateX(72deg);border-color:rgba(141,204,237,.8)}
+@keyframes chainGlow{0%,100%{box-shadow:0 0 6px rgba(223,195,140,.15)}50%{box-shadow:0 0 18px rgba(223,195,140,.85),0 0 30px rgba(223,195,140,.35)}}
+.water{position:relative;display:block;width:100%;height:var(--wh,90px);overflow:hidden;pointer-events:none}
+.water svg{position:absolute;left:0;top:0;width:200%;height:100%}
+.water .w1{animation:flow 14s linear infinite}.water .w2{animation:flow 22s linear infinite reverse;opacity:.6}.water .w3{animation:flow 9s linear infinite;opacity:.35}
+@keyframes flow{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.spine-flow{position:absolute;left:50%;width:2px;margin-left:-1px;background:repeating-linear-gradient(180deg,rgba(141,204,237,0) 0 18px,rgba(141,204,237,.9) 18px 30px,rgba(223,195,140,.9) 30px 40px,rgba(141,204,237,0) 40px 64px);background-size:100% 64px;animation:spineRun 1.6s linear infinite;filter:drop-shadow(0 0 8px rgba(141,204,237,.6));opacity:.55;pointer-events:none}
+@keyframes spineRun{from{background-position:0 0}to{background-position:0 64px}}
+.shards{position:absolute;inset:0;pointer-events:none;transform-style:preserve-3d}
+.shard{position:absolute;width:var(--sz,10px);height:var(--sz,10px);background:rgba(var(--sc,223,195,140),.85);box-shadow:0 0 14px rgba(var(--sc,223,195,140),.7),4px 4px 0 rgba(0,0,0,.55);animation:shardFloat var(--dur,7s) ease-in-out infinite alternate;animation-delay:var(--dl,0s);transform:translateZ(var(--z,0px))}
+@keyframes shardFloat{from{translate:0 0}to{translate:var(--dx,6px) var(--dy,-14px)}}
+/* ---------- motion ---------- */
+.rise{animation:rise .9s var(--ease) both;animation-delay:calc(var(--i,0) * 90ms)}
+@keyframes rise{from{opacity:0;transform:translateY(22px);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@keyframes float{0%,100%{translate:0 0}50%{translate:0 -8px}}
+@keyframes drift{from{transform:scale(1.04) translateX(0)}to{transform:scale(1.08) translateX(-14px)}}
+@keyframes blink{50%{opacity:0}}
+@keyframes travel{0%{left:-6%;opacity:0}8%{opacity:1}92%{opacity:1}100%{left:104%;opacity:0}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+  .app{--pg:214,68,96}
+  
+.search{display:flex;align-items:center;gap:12px;height:44px;padding:0 16px;border-radius:9px;background:var(--surface);border:1px solid var(--line-strong);color:var(--muted);font-size:12.5px;box-shadow:var(--sh-1)}
+.grid2{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.3fr);gap:24px;margin-top:24px;align-items:start}
+.grid-eq{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:24px}
+.grant{padding:18px 22px;border-bottom:1px solid var(--line);transition:background .25s}
+.grant:last-child{border-bottom:0}.grant:hover{background:rgba(223,195,140,.03)}
+.grant .top{display:grid;grid-template-columns:36px minmax(0,1fr) auto auto;gap:14px;align-items:start}
+.grant .ico{width:36px;height:36px;display:grid;place-items:center;border-radius:9px;color:var(--gold);background:linear-gradient(160deg,#1b2c45,#111d31);border:1px solid rgba(223,195,140,.35);box-shadow:var(--sh-1);transform:rotateX(10deg) rotateY(-12deg)}
+.grant b.name{font-size:13px;font-weight:600;color:var(--text)}.grant b.name small{font-family:var(--mono);font-weight:400;color:var(--muted);margin-left:6px}
+.grant .meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font:11px var(--mono);color:var(--muted)}
+.grant .meta a{color:var(--info)}
+.grant .amt{text-align:right}.grant .amt b{display:block;font:14px var(--mono);font-weight:500;color:var(--gold-hi)}.grant .amt small{font:10.5px var(--mono);color:var(--muted)}
+.grant .bar{margin-top:14px}
+.grant .actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
+.grant .danger{flex-basis:100%;display:flex;align-items:center;gap:8px;margin-top:4px;padding-top:12px;border-top:1px dashed rgba(255,147,164,.35)}
+.grant .danger small{margin-left:auto;font:9px var(--mono);letter-spacing:.16em;color:rgba(255,147,164,.7)}
+.grant .log{margin-top:12px;display:flex;align-items:center;gap:8px;font:12px var(--mono);color:var(--text-2)}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px 22px;border-bottom:1px solid var(--line)}
+.steps{perspective:900px}
+.step{position:relative;display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-radius:8px;font-size:11.5px;color:var(--muted);background:var(--inset);border:1px solid var(--line);text-align:left;transition:all .3s var(--ease);transform-style:preserve-3d}
+.step::before{content:"";position:absolute;left:4px;right:-4px;top:-7px;height:7px;border-radius:3px 3px 0 0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);border-bottom:0;transform:skewX(-45deg)}
+.step::after{content:"";position:absolute;right:-7px;top:-3px;bottom:4px;width:7px;background:rgba(0,0,0,.5);border-radius:0 3px 3px 0;transform:skewY(-45deg)}
+.step:hover{transform:translateZ(10px)}
+.step i{display:grid;place-items:center;width:20px;height:20px;border-radius:5px;font:10px var(--mono);border:1px solid var(--line-strong);color:var(--muted)}
+.step[aria-current="step"]{color:var(--gold-hi);background:rgba(223,195,140,.1);border-color:rgba(223,195,140,.5);box-shadow:0 0 22px -8px rgba(223,195,140,.7),var(--sh-1);transform:translateZ(16px) translateY(-2px)}
+.step[aria-current="step"]::before{background:rgba(223,195,140,.35)}
+.step[aria-current="step"] i{background:var(--gold);color:#101827;border-color:var(--gold)}
+.step[data-done="true"]{color:var(--ok)}.step[data-done="true"] i{color:var(--ok);border-color:rgba(133,219,192,.5);background:rgba(133,219,192,.1)}
+.help{font-size:12.5px;line-height:1.65;color:#aebed3;margin:0 0 12px}
+.help code{font-family:var(--mono);color:var(--gold-hi);font-size:11.5px}
+.mint{height:36px;padding:0 14px;border-radius:7px;font:12px var(--mono);color:#b8c5d8;background:rgba(23,36,58,.8);border:1px solid #34435c;box-shadow:var(--sh-1);transition:all .2s var(--ease)}
+.mint[aria-pressed="true"]{color:var(--gold-hi);background:rgba(223,195,140,.1);border-color:#d9bb81;box-shadow:0 0 18px -6px rgba(223,195,140,.6)}
+.mint:hover{transform:translateY(-1px)}
+.slider{margin:6px 0 18px}
+.slider .row{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-2)}
+.slider .row b{font:13px var(--mono);font-weight:500;color:var(--gold-hi)}
+.slider .track{position:relative;height:6px;margin-top:10px;border-radius:4px;background:rgba(255,255,255,.07);box-shadow:inset 0 1px 3px rgba(0,0,0,.7)}
+.slider .fill{position:absolute;left:0;top:0;height:100%;border-radius:4px;background:linear-gradient(90deg,#b8985a,#eed5a3);box-shadow:0 0 12px rgba(223,195,140,.5)}
+.slider .knob{position:absolute;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff5dc,#dfc38c 60%,#b8985a);box-shadow:0 4px 10px rgba(0,0,0,.6),0 0 0 3px rgba(223,195,140,.2)}
+.summary{padding:18px 20px;border-radius:12px;background:linear-gradient(160deg,rgba(23,36,58,.9),rgba(12,20,37,.95));border:1px solid var(--line-strong);box-shadow:var(--sh-2);font-size:13.5px;line-height:1.8;color:var(--text-2)}
+.summary b{color:var(--gold-hi);font-family:var(--mono);font-weight:500}
+.copilot{margin-top:16px;display:grid;grid-template-columns:120px 1fr;gap:18px;padding:18px 20px;border-radius:12px;border:1px solid rgba(133,219,192,.4);background:linear-gradient(90deg,rgba(133,219,192,.08),transparent 60%);box-shadow:var(--sh-1)}
+.score{display:grid;place-items:center;width:110px;height:110px;border-radius:50%;position:relative;background:conic-gradient(var(--ok) 0 22%,rgba(255,255,255,.06) 22% 100%);box-shadow:0 0 30px -8px rgba(133,219,192,.7),inset 0 0 0 1px rgba(255,255,255,.05)}
+.score::before{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--surface);box-shadow:inset 0 2px 8px rgba(0,0,0,.6)}
+.score b{position:relative;font:26px var(--mono);font-weight:500;color:var(--ok)}.score small{position:absolute;bottom:22px;font:8.5px var(--mono);letter-spacing:.2em;color:var(--muted)}
+.copilot h4{margin:0 0 6px;font-size:13px;color:var(--text)}.copilot p{margin:0;font-size:12.5px;line-height:1.7;color:#aebed3}
+.copilot ul{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+.copilot li{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--text-2)}
+.copilot li svg{flex:none;margin-top:3px}
+.signzone{margin-top:20px;padding:18px 20px;border-radius:12px;border:1px solid rgba(223,195,140,.4);background:rgba(223,195,140,.05);display:flex;align-items:center;justify-content:space-between;gap:20px;box-shadow:var(--sh-2)}
+.signzone p{margin:0;font-size:12px;line-height:1.6;color:#aebed3;max-width:360px}
+.wizfoot{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-top:1px solid var(--line)}
+.dest{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-radius:8px;background:var(--inset);border:1px solid var(--line);font:12px var(--mono);color:var(--text-2);margin-bottom:8px}
+.dest .rm{margin-left:auto;color:var(--muted)}
+/* proposals log */
+.log-row{display:grid;grid-template-columns:70px 1fr 220px 120px 110px;gap:14px;align-items:center;padding:12px 22px;border-bottom:1px solid rgba(45,59,83,.7);font-size:12px;transition:background .2s}
+.log-row:hover{background:rgba(223,195,140,.03)}
+.log-row .t{font:11px var(--mono);color:var(--muted)}
+.log-row .amt{font:12.5px var(--mono);color:var(--gold-hi)}
+.log-row .sig{font:11px var(--mono);color:var(--info)}
+.log-row.rejected{background:linear-gradient(90deg,rgba(255,147,164,.06),transparent 50%)}
+.log-head{display:grid;grid-template-columns:70px 1fr 220px 120px 110px;gap:14px;padding:10px 22px;border-bottom:1px solid var(--line);font:9px var(--mono);letter-spacing:.2em;color:var(--muted)}
+/* kpi tiles */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:24px;perspective:1400px}
+.kpi{position:relative;padding:18px 20px;border-radius:14px;background:linear-gradient(180deg,rgba(23,36,58,.6),rgba(18,28,48,.95));border:1px solid var(--line-strong);box-shadow:var(--sh-2);transform-style:preserve-3d;transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
+.kpi:hover{transform:translateY(-4px) rotateX(3deg);box-shadow:var(--sh-3)}
+.kpi::before{content:"";position:absolute;left:20px;right:20px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(var(--pg),.6),transparent)}
+.kpi small{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi small .ico{width:24px;height:24px;display:grid;place-items:center;border-radius:6px;color:rgb(var(--pg));background:rgba(var(--pg),.12);border:1px solid rgba(var(--pg),.3)}
+.kpi b{display:block;margin-top:10px;padding-right:104px;font:28px var(--mono);font-weight:500;color:var(--text);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .sub{margin-top:6px;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .spark{position:absolute;right:18px;top:44px;width:86px;height:34px;opacity:.9}
+.kpi .depth{position:absolute;inset:0;border-radius:14px;transform:translateZ(-14px);background:rgba(8,13,25,.9);border:1px solid rgba(45,59,83,.6)}
+
+.cockpit{display:grid;grid-template-columns:500px minmax(0,1fr);gap:28px;margin-top:22px;align-items:start}
+/* --- policy deck: physical grant cards fanned in 3D --- */
+.deck{position:relative;height:330px;perspective:1600px}
+.gcard{position:absolute;left:0;right:0;top:0;height:230px;border-radius:18px;padding:22px 24px;overflow:hidden;transform-style:preserve-3d;
+  background:linear-gradient(135deg,#1d2f4c 0%,#101b30 55%,#0b1424 100%);border:1px solid rgba(223,195,140,.45);
+  box-shadow:0 40px 60px -30px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.03) inset,0 0 60px -30px rgba(223,195,140,.5);
+  transition:transform .6s var(--ease),box-shadow .6s var(--ease),opacity .4s;cursor:pointer;text-align:left;width:100%}
+.gcard::before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.08) 45%,rgba(141,204,237,.12) 50%,rgba(223,195,140,.14) 55%,transparent 70%);mix-blend-mode:screen;animation:holo 6s ease-in-out infinite}
+@keyframes holo{0%,100%{transform:translateX(-30%)}50%{transform:translateX(30%)}}
+.gcard::after{content:"";position:absolute;left:24px;right:24px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(223,195,140,.8),transparent)}
+.gcard.c0{transform:translateZ(60px) rotateX(6deg)}
+.gcard.c1{transform:translateY(48px) translateZ(0) rotateX(6deg) scale(.965);opacity:.95;filter:brightness(.85)}
+.gcard.c2{transform:translateY(94px) translateZ(-60px) rotateX(6deg) scale(.93);opacity:.8;filter:brightness(.7)}
+.gcard:hover{transform:translateZ(90px) rotateX(2deg)!important;opacity:1;filter:none}
+.gcard .row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.gcard .chipset{width:44px;height:34px;border-radius:7px;background:linear-gradient(135deg,#eed5a3,#b8985a);box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),0 4px 8px -4px rgba(0,0,0,.8);position:relative}
+.gcard .chipset::before{content:"";position:absolute;inset:8px 10px;border:1px solid rgba(0,0,0,.35);border-radius:3px}
+.gcard .who{margin-top:16px}.gcard .who b{font-size:16px;font-weight:600;color:var(--text)}.gcard .who small{display:block;margin-top:2px;font:10.5px var(--mono);color:var(--muted)}
+.gcard .nums{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:18px}
+.gcard .nums small{display:block;font:8px var(--mono);letter-spacing:.2em;color:var(--muted)}
+.gcard .nums b{display:block;margin-top:4px;font:15px var(--mono);font-weight:500;color:var(--gold-hi)}
+.gcard .bar{margin-top:16px;height:5px}
+.gcard .stamp{position:absolute;right:24px;bottom:22px;font:9px var(--mono);letter-spacing:.2em}
+.gcard.dead{border-color:rgba(255,147,164,.35)}
+.gcard.dead .chipset{filter:grayscale(1) brightness(.6)}
+.deck-actions{display:grid;gap:12px;margin-top:6px;padding:18px 20px;border-radius:14px;background:rgba(15,25,43,.85);border:1px solid var(--line-strong);box-shadow:var(--sh-1)}
+.deck-actions .row{display:flex;gap:10px;flex-wrap:wrap}
+.deck-actions .danger{padding-top:12px;border-top:1px dashed rgba(255,147,164,.35);display:flex;gap:8px;align-items:center}
+.deck-actions .danger small{margin-left:auto;font:9px var(--mono);letter-spacing:.16em;color:rgba(255,147,164,.7)}
+/* --- transfer lane --- */
+.lane{position:relative;margin-top:26px;padding:22px 26px 18px;border-radius:16px;background:linear-gradient(180deg,rgba(23,36,58,.55),rgba(12,20,37,.95));border:1px solid var(--line-strong);box-shadow:var(--sh-2),8px 8px 0 0 rgba(var(--pg),.2);perspective:1400px;overflow:visible}
+.lane .track{display:grid;grid-template-columns:110px repeat(7,minmax(0,1fr)) 110px;gap:10px;align-items:center;position:relative;transform:rotateX(8deg);transform-origin:50% 100%;transform-style:preserve-3d}
+.lane .ep{width:auto;height:76px;flex-direction:row;gap:10px;font-size:9px}
+.mg{position:relative;height:76px;border-radius:9px;padding:10px 8px;background:linear-gradient(160deg,#1b2c45,#101b30);border:1px solid var(--line-strong);display:flex;flex-direction:column;justify-content:space-between;transition:all .35s var(--ease);transform-style:preserve-3d}
+.mg b{font:600 14px var(--mono);color:var(--text-2)}.mg small{font-size:9.5px;line-height:1.2;color:var(--muted)}
+.mg::before{content:"";position:absolute;left:4px;right:-4px;top:-7px;height:7px;border-radius:3px 3px 0 0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);border-bottom:0;transform:skewX(-45deg)}
+.lane[data-phase="fly"] .mg,.lane[data-phase="land"] .mg{animation:mgPass .5s var(--ease) both;animation-delay:calc(.25s + var(--k) * .17s)}
+.lane[data-phase="block"] .mg:nth-child(-n+6){animation:mgPass .5s var(--ease) both;animation-delay:calc(.25s + var(--k) * .17s)}
+.lane[data-phase="block"] .mg.k6{animation:mgBlock .6s var(--ease) both;animation-delay:1.3s}
+@keyframes mgPass{to{border-color:rgba(133,219,192,.75);background:linear-gradient(160deg,rgba(133,219,192,.22),#101b30);box-shadow:0 0 22px -4px rgba(133,219,192,.6);transform:translateZ(8px)}}
+@keyframes mgBlock{0%{transform:translateZ(8px)}30%{transform:translateZ(22px) translateX(-4px)}60%{transform:translateZ(22px) translateX(4px)}100%{border-color:rgba(255,147,164,.9);background:linear-gradient(160deg,rgba(255,147,164,.28),#101b30);box-shadow:0 0 34px -2px rgba(255,147,164,.8);transform:translateZ(18px)}}
+.lane .coin{top:-4px;left:6%;opacity:0}
+.lane[data-phase="fly"] .coin{animation:coinFly 1.9s var(--ease) both}
+.lane[data-phase="land"] .coin{opacity:0}
+.lane[data-phase="block"] .coin{animation:coinBlock 1.9s var(--ease) both}
+@keyframes coinFly{0%{left:6%;opacity:0}8%{opacity:1}85%{left:92%;opacity:1}100%{left:92%;opacity:0;transform:translateY(20px) scale(.6)}}
+@keyframes coinBlock{0%{left:6%;opacity:0}8%{opacity:1}70%{left:73%}76%{left:71%}82%{left:74%}100%{left:73%;opacity:0;filter:drop-shadow(0 0 14px rgba(255,147,164,.9))}}
+.lane .status{display:flex;align-items:center;justify-content:space-between;margin-top:18px;font:10px var(--mono);letter-spacing:.14em;color:var(--muted)}
+.lane .status b{color:var(--text-2);font-weight:500}
+.lane .status .live{display:inline-flex;align-items:center;gap:8px}.lane .status .live i{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);animation:pulse 1.6s infinite}
+.lane[data-phase="block"] .status .live i{background:var(--bad);box-shadow:0 0 10px var(--bad)}
+.newrow{animation:dropIn .7s var(--ease) both}
+.newrow.ok{background:linear-gradient(90deg,rgba(133,219,192,.12),transparent 55%)}
+.newrow.bad{background:linear-gradient(90deg,rgba(255,147,164,.14),transparent 55%);animation:dropIn .7s var(--ease) both,shake .5s .7s}
+.wizard .pb{min-height:400px}
+</style>
+</helmet>
+
+<div class="app">
+
+<header class="hdr">
+  <div class="brand"><span class="emblem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>REDLINE</div>
+  <nav class="nav" aria-label="Primary navigation"><button type="button">Protocol</button><button type="button">Marketplace</button><button type="button">Agents</button><button type="button" aria-current="page">Guardrails</button><button type="button">Treasury</button><button type="button">Audit</button><button type="button">Analytics</button><button type="button">Copilot</button><button type="button">Models</button><button type="button">Settings</button></nav>
+  <div class="tools">
+    <button type="button" class="tool"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>Find <kbd>⌘K</kbd></button>
+    <button type="button" class="tool"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4h3l4 3V7L7 10H4z"/><path d="M16 9a4 4 0 010 6"/></svg>Sound off</button>
+    <span class="netpill"><i></i>DEVNET</span>
+    <button type="button" class="btn btn-gold" style="height: 36px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#101827" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="14.5" r="1"/></svg>8xkA…p2Qe <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#101827" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button type="button" class="avatar-btn"><span class="av-vox"><div class="vox " style="--vs: 16px"><i class="r"></i><i class="t"></i><i class="f"></i></div></span></button>
+  </div>
+</header>
+<main class="page" onMouseMove="{{ onMove }}" onMouseLeave="{{ onLeave }}">
+
+<div class="topline rise" style="--i: 0">
+  <div class="tl-id"><span class="tl-vox"><div class="vox " style="--vs: 18px"><i class="r"></i><i class="t"></i><i class="f"></i></div></span><small>04 / 11</small><b>Guardrails</b></div>
+  <p>Sign a policy once. From then on the program — not this dashboard — decides every transfer the agent proposes.</p>
+  <div class="tl-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></div>
+  <div class="tl-nav"><button type="button" class="jbtn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span><small>PREV</small>Agents</span></button><button type="button" class="jbtn"><span><small>NEXT</small>Treasury</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+</div>
+<div class="cockpit">
+  <div>
+    <div class="eyebrow rise" style="--i: 1; margin: 6px 0 14px">POLICY DECK · 1 ACTIVE · 2 REVOKED</div>
+    <div class="deck rise" style="--i: 2">
+      <button type="button" class="gcard c2 dead">
+      <div class="row"><span class="chipset"></span><span class="chip chip-bad">● REVOKED</span></div>
+      <div class="who"><b>YieldGuard Alpha</b><small>v0.1.0 · grant vdPU…GY6e</small></div>
+      <div class="nums"><div><small>SPENT / CAP</small><b>300 / 500</b></div><div><small>TX</small><b>3 / 50</b></div><div><small>TIME LEFT</small><b>expired</b></div></div>
+      <div class="bar bad"><i style="width: 60%"></i></div>
+      <span class="stamp" style="color: var(--bad)">REVOKED BY OWNER</span>
+    </button>
+      <button type="button" class="gcard c1 dead">
+      <div class="row"><span class="chipset"></span><span class="chip chip-bad">● REVOKED</span></div>
+      <div class="who"><b>CSaCLAB</b><small>v1.0.0 · grant HRRW…WNKN</small></div>
+      <div class="nums"><div><small>SPENT / CAP</small><b>1,588 / 7,944</b></div><div><small>TX</small><b>1 / 50</b></div><div><small>TIME LEFT</small><b>expired</b></div></div>
+      <div class="bar bad"><i style="width: 20%"></i></div>
+      <span class="stamp" style="color: var(--bad)">REVOKED BY OWNER</span>
+    </button>
+      <button type="button" class="gcard c0">
+      <div class="row"><span class="chipset"></span><span class="chip chip-ok">● ACTIVE</span></div>
+      <div class="who"><b>tui là thắng</b><small>v1.0.0 · grant GFNM…v1tJ</small></div>
+      <div class="nums"><div><small>SPENT / CAP</small><b>{{ spent }} / 500</b></div><div><small>TX</small><b>{{ txc }} / 50</b></div><div><small>TIME LEFT</small><b>23h 12m</b></div></div>
+      <div class="bar"><i style="width: {{ pct }}%"></i></div>
+      <span class="stamp" style="color: var(--gold)">SIGNED ON-CHAIN · SHA-256</span>
+    </button>
+    </div>
+    <div class="deck-actions rise" style="--i: 3">
+      <div class="row"><button type="button" class="btn btn-gold btn-sm" onClick="{{ fire }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#101827" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 5v14l11-7z"/></svg> Start agent (scripted)</button><button type="button" class="btn btn-ghost btn-sm"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg> Show every proposal</button><button type="button" class="btn btn-ghost btn-sm"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg> Explorer</button></div>
+      <div class="danger"><button type="button" class="btn btn-danger btn-sm" onClick="{{ force }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3L4 14h7l-1 7 9-11h-7l1-7z"/></svg> Force 500 USDC (over cap)</button><button type="button" class="btn btn-danger btn-sm"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg> Revoke</button><small>IRREVERSIBLE · OWNER SIGNS</small></div>
+    </div>
+  </div>
+
+  <section class="panel wizard rise" style="--i: 2">
+    <div class="ph"><div style="display: flex; align-items: center; gap: 10px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dfc38c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/></svg><h3>Create Agent Policy</h3></div><span class="chip chip-ok">SOLANA DEVNET</span></div>
+    <div class="steps">
+      <button type="button" class="step" aria-current="{{ cur1 }}" data-done="{{ done1 }}" onClick="{{ go1 }}"><i>1</i>Scope</button>
+      <button type="button" class="step" aria-current="{{ cur2 }}" data-done="{{ done2 }}" onClick="{{ go2 }}"><i>2</i>Spend limits</button>
+      <button type="button" class="step" aria-current="{{ cur3 }}" data-done="{{ done3 }}" onClick="{{ go3 }}"><i>3</i>Time bounds</button>
+      <button type="button" class="step" aria-current="{{ cur4 }}" data-done="{{ done4 }}" onClick="{{ go4 }}"><i>4</i>Review &amp; sign</button>
+    </div>
+    <div class="pb">
+      <sc-if value="{{ is1 }}" hint-placeholder-val="{{ true }}">
+        <p class="help">Which published agent version does this grant authorise? The grant records its <code>agentHash</code>, so this is the build the policy is bound to.</p>
+        <label class="field">Agent version<div class="in" style="justify-content: space-between">hello v1.0.0 · 41d3d11a…<span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span></div></label>
+        <p class="help">Allowlist the SPL assets this agent may reference. Every other mint remains outside the signed policy.</p>
+        <div class="pill-row" style="margin-bottom: 18px">
+          <button type="button" class="mint" aria-pressed="{{ mSol }}" onClick="{{ tSol }}">SOL</button>
+          <button type="button" class="mint" aria-pressed="{{ mUsdc }}" onClick="{{ tUsdc }}">USDC</button>
+          <button type="button" class="mint" aria-pressed="{{ mJup }}" onClick="{{ tJup }}">JUP</button>
+          <button type="button" class="mint" aria-pressed="false">JTO</button><button type="button" class="mint" aria-pressed="false">BONK</button><button type="button" class="mint" aria-pressed="false">PYTH</button>
+        </div>
+        <p class="help">Allowlist the addresses this agent may pay. An address not here cannot receive funds, whatever the agent proposes. Up to 4.</p>
+        <div class="dest"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#85dbc0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"/></svg>7XB2hFTccpjS6sgZZjr8wWnCuk6jYuXk6aYkXRHPu62q<span class="rm"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+        <div class="dest" style="border-style: dashed; color: var(--muted)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a destination address</div>
+      </sc-if>
+      <sc-if value="{{ is2 }}" hint-placeholder-val="{{ false }}">
+        <p class="help">The budget is the most the agent can move across the whole grant. The transaction cap bounds how many proposals may succeed.</p>
+        <div class="slider"><div class="row"><span>Spend cap</span><b>2,500 USDC</b></div><div class="track"><div class="fill" style="width: 25%"></div><div class="knob" style="left: 25%"></div></div></div>
+        <div class="slider"><div class="row"><span>Max transactions</span><b>10</b></div><div class="track"><div class="fill" style="width: 20%"></div><div class="knob" style="left: 20%"></div></div></div>
+        <div class="inset" style="display: grid; grid-template-columns: repeat(3, 1fr); padding: 14px 18px; margin-top: 6px">
+          <div><small class="mono" style="font-size: 8.5px; letter-spacing: .18em; color: var(--muted)">AVG / TX</small><div class="mono" style="font-size: 15px; color: var(--gold-hi)">$250.00</div></div>
+          <div><small class="mono" style="font-size: 8.5px; letter-spacing: .18em; color: var(--muted)">RISK</small><div class="mono" style="font-size: 15px; color: var(--warn)">MED</div></div>
+          <div><small class="mono" style="font-size: 8.5px; letter-spacing: .18em; color: var(--muted)">MINTS</small><div class="mono" style="font-size: 15px; color: var(--info)">{{ mintCount }}</div></div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ is3 }}" hint-placeholder-val="{{ false }}">
+        <p class="help">Authority never lingers by default. The grant expires on its own, and the cooldown makes runaway loops impossible.</p>
+        <div class="slider"><div class="row"><span>Policy lifetime</span><b>24 h</b></div><div class="track"><div class="fill" style="width: 14%"></div><div class="knob" style="left: 14%"></div></div></div>
+        <div class="slider"><div class="row"><span>Cooldown between transfers</span><b>60 min</b></div><div class="track"><div class="fill" style="width: 42%"></div><div class="knob" style="left: 42%"></div></div></div>
+        <div class="inset" style="padding: 14px 18px; display: flex; gap: 14px; align-items: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dfc38c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span style="font-size: 12.5px; color: var(--text-2); line-height: 1.6">Expires <b class="mono" style="color: var(--gold-hi); font-weight: 500">Sat 05 Sep 2026, 09:14</b> · at most <b class="mono" style="color: var(--gold-hi); font-weight: 500">24</b> transfers could fit in the window.</span></div>
+      </sc-if>
+      <sc-if value="{{ is4 }}" hint-placeholder-val="{{ false }}">
+        <div class="summary">You are authorising <b>hello v1.0.0</b> to move at most <b>2,500 USDC</b> in up to <b>10</b> transfers, only in <b>{{ mintText }}</b>, only to <b>1 address</b>, waiting <b>60 min</b> between transfers, until <b>05 Sep 09:14</b>. You can revoke at any time from your wallet.</div>
+        <div class="copilot">
+          <div class="score"><b>22</b><small>RISK</small></div>
+          <div><h4>AI Risk Copilot · <span class="chip chip-ok" style="vertical-align: middle">ALLOW</span></h4>
+            <p>Scope is narrow and the envelope is small relative to the vault.</p>
+            <ul><li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#85dbc0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"/></svg>Single allowlisted destination limits phishing blast radius.</li><li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#85dbc0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"/></svg>Cooldown 60 min · cap 10 → at most 2,500 USDC even if the agent is compromised.</li><li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f1c678" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3L4 14h7l-1 7 9-11h-7l1-7z"/></svg>USDC and SOL both allowed — consider USDC only for payroll.</li></ul></div>
+        </div>
+        <div class="signzone"><p>Signing publishes the policy digest on-chain. From then on, the program — not this dashboard — decides every transfer.</p><button type="button" class="btn btn-gold" style="height: 46px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#101827" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M15 5l3 3M18 8l2-2"/></svg> Sign &amp; create on-chain grant</button></div>
+      </sc-if>
+    </div>
+    <div class="wizfoot">
+      <button type="button" class="btn btn-ghost btn-sm" onClick="{{ prev }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Back</button>
+      <span class="mono" style="font-size: 10px; letter-spacing: .18em; color: var(--muted)">STEP {{ step }} / 4</span>
+      <button type="button" class="btn btn-gold btn-sm" onClick="{{ next }}">Continue <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#101827" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </section>
+</div>
+
+<!-- transfer lane -->
+<div class="lane rise" style="--i: 4" data-phase="{{ phase }}">
+  <div class="ph" style="padding: 0 0 16px; border-bottom: 0"><span class="eyebrow">LIVE TRANSFER LANE · tui là thắng v1.0.0</span><span class="chip chip-info">● SSE</span></div>
+  <div class="coin"><div class="vox " style="--vs: 20px"><i class="r"></i><i class="t"></i><i class="f"></i></div></div>
+  <div class="track">
+    <div class="ep agent"><div class="vox vox-info" style="--vs: 24px"><i class="r"></i><i class="t"></i><i class="f"></i></div>AGENT</div>
+    <div class="mg" style="--k: 0"><b>01</b><small>Active grant</small></div><div class="mg" style="--k: 1"><b>02</b><small>Time window</small></div><div class="mg" style="--k: 2"><b>03</b><small>Fresh intent</small></div><div class="mg" style="--k: 3"><b>04</b><small>Allowed asset</small></div><div class="mg" style="--k: 4"><b>05</b><small>Allowed recipient</small></div><div class="mg" style="--k: 5"><b>06</b><small>Budget envelope</small></div><div class="mg" style="--k: 6"><b>07</b><small>Execution pace</small></div>
+    <div class="ep vault"><div class="vox vox-ok" style="--vs: 24px"><i class="r"></i><i class="t"></i><i class="f"></i></div>VAULT</div>
+  </div>
+  <div class="status"><span class="live"><i></i><b>{{ statusText }}</b></span><span>PRESS <b>START AGENT</b> TO PROPOSE 100 USDC · <b>FORCE</b> TO TRY 500 OVER A 500 CAP</span></div>
+</div>
+
+<!-- proposals log -->
+<section class="panel rise" style="--i: 5; margin-top: 24px">
+  <div class="ph"><h3>Every proposal this agent made</h3><span class="mono" style="font-size: 10px; color: var(--muted)">{{ total }} PROPOSALS · NEWEST FIRST</span></div>
+  <div class="log-head"><span>TIME</span><span>PROPOSAL</span><span>GATES</span><span>AMOUNT</span><span>SIGNATURE</span></div>
+  <sc-if value="{{ showBlocked }}" hint-placeholder-val="{{ false }}">
+    <div class="log-row rejected newrow bad"><span class="t">now</span><span><span class="chip chip-bad" style="margin-right: 8px">SPEND_CAP_EXCEEDED</span>Forced 500 USDC over a 500 cap · nothing moved</span><div class="gate-dots"><i class="ok" title="Active grant · REVOKED">1</i><i class="ok" title="Time window · EXPIRED">2</i><i class="ok" title="Fresh intent · NONCE_REPLAY">3</i><i class="ok" title="Allowed asset · MINT_NOT_ALLOWED">4</i><i class="ok" title="Allowed recipient · DESTINATION_NOT_ALLOWED">5</i><i class="bad" title="Budget envelope · SPEND_CAP_EXCEEDED">6</i><i class="" title="Execution pace · COOLDOWN_ACTIVE">7</i></div><span class="amt" style="color: var(--bad)">500.00 USDC</span><a class="sig">pending… <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg></a></div>
+  </sc-if>
+  <sc-if value="{{ showAllowed }}" hint-placeholder-val="{{ false }}">
+    <div class="log-row newrow ok"><span class="t">now</span><span><span class="chip chip-ok" style="margin-right: 8px">ALLOWED</span>Transfer to 7XB2…u62q · 7 gates passed · vault −100</span><div class="gate-dots"><i class="ok" title="Active grant · REVOKED">1</i><i class="ok" title="Time window · EXPIRED">2</i><i class="ok" title="Fresh intent · NONCE_REPLAY">3</i><i class="ok" title="Allowed asset · MINT_NOT_ALLOWED">4</i><i class="ok" title="Allowed recipient · DESTINATION_NOT_ALLOWED">5</i><i class="ok" title="Budget envelope · SPEND_CAP_EXCEEDED">6</i><i class="ok" title="Execution pace · COOLDOWN_ACTIVE">7</i></div><span class="amt">100.00 USDC</span><a class="sig">confirmed <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg></a></div>
+  </sc-if>
+  <div class="log-row"><span class="t">09:12:41</span><span>Transfer to 7XB2…u62q · allowed</span><div class="gate-dots"><i class="ok" title="Active grant · REVOKED">1</i><i class="ok" title="Time window · EXPIRED">2</i><i class="ok" title="Fresh intent · NONCE_REPLAY">3</i><i class="ok" title="Allowed asset · MINT_NOT_ALLOWED">4</i><i class="ok" title="Allowed recipient · DESTINATION_NOT_ALLOWED">5</i><i class="ok" title="Budget envelope · SPEND_CAP_EXCEEDED">6</i><i class="ok" title="Execution pace · COOLDOWN_ACTIVE">7</i></div><span class="amt">100.00 USDC</span><a class="sig">4kz…73A <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg></a></div>
+  <div class="log-row"><span class="t">09:11:38</span><span>Transfer to 7XB2…u62q · allowed</span><div class="gate-dots"><i class="ok" title="Active grant · REVOKED">1</i><i class="ok" title="Time window · EXPIRED">2</i><i class="ok" title="Fresh intent · NONCE_REPLAY">3</i><i class="ok" title="Allowed asset · MINT_NOT_ALLOWED">4</i><i class="ok" title="Allowed recipient · DESTINATION_NOT_ALLOWED">5</i><i class="ok" title="Budget envelope · SPEND_CAP_EXCEEDED">6</i><i class="ok" title="Execution pace · COOLDOWN_ACTIVE">7</i></div><span class="amt">100.00 USDC</span><a class="sig">9Qm…cE1 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg></a></div>
+  <div class="log-row rejected"><span class="t">09:11:02</span><span><span class="chip chip-bad" style="margin-right: 8px">COOLDOWN_ACTIVE</span>Proposed 36 s after the last transfer</span><div class="gate-dots"><i class="ok" title="Active grant · REVOKED">1</i><i class="ok" title="Time window · EXPIRED">2</i><i class="ok" title="Fresh intent · NONCE_REPLAY">3</i><i class="ok" title="Allowed asset · MINT_NOT_ALLOWED">4</i><i class="ok" title="Allowed recipient · DESTINATION_NOT_ALLOWED">5</i><i class="ok" title="Budget envelope · SPEND_CAP_EXCEEDED">6</i><i class="bad" title="Execution pace · COOLDOWN_ACTIVE">7</i></div><span class="amt" style="color: var(--bad)">100.00 USDC</span><a class="sig">t4X…9su <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg></a></div>
+  <div class="log-row"><span class="t">09:09:27</span><span>Transfer to 7XB2…u62q · allowed</span><div class="gate-dots"><i class="ok" title="Active grant · REVOKED">1</i><i class="ok" title="Time window · EXPIRED">2</i><i class="ok" title="Fresh intent · NONCE_REPLAY">3</i><i class="ok" title="Allowed asset · MINT_NOT_ALLOWED">4</i><i class="ok" title="Allowed recipient · DESTINATION_NOT_ALLOWED">5</i><i class="ok" title="Budget envelope · SPEND_CAP_EXCEEDED">6</i><i class="ok" title="Execution pace · COOLDOWN_ACTIVE">7</i></div><span class="amt">100.00 USDC</span><a class="sig">2Hf…pQ8 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg></a></div>
+</section>
+</main>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Base extends DCLogic {
+  plx() {
+    const s = this.state || {}; const tx = s.ptx || 0, ty = s.pty || 0;
+    return { gx: -tx * 10, gy: ty * 14, bx: -ty * 6, by: -tx * 6, px1: ty * 8, py1: -tx * 8, px2: ty * 18, py2: -tx * 18,
+      onMove: (e) => { const r = e.currentTarget.getBoundingClientRect(); this.setState({ ptx: (e.clientY - r.top) / r.height - .5, pty: (e.clientX - r.left) / r.width - .5 }); },
+      onLeave: () => this.setState({ ptx: 0, pty: 0 }) };
+  }
+}
+class Component extends Base {
+  constructor(p){ super(p); this.state = { step: 1, mints: { sol: true, usdc: true, jup: false }, phase: 'idle', spent: 300, txc: 3, allowed: false, blocked: false, total: 4 }; }
+  renderVals() {
+    const s = this.state, st = s.step;
+    return { ...this.plx(),
+      step: st, is1: st === 1, is2: st === 2, is3: st === 3, is4: st === 4,
+      cur1: st === 1 ? 'step' : 'false', cur2: st === 2 ? 'step' : 'false', cur3: st === 3 ? 'step' : 'false', cur4: st === 4 ? 'step' : 'false',
+      done1: st > 1, done2: st > 2, done3: st > 3, done4: false,
+      go1: () => this.setState({ step: 1 }), go2: () => this.setState({ step: 2 }), go3: () => this.setState({ step: 3 }), go4: () => this.setState({ step: 4 }),
+      next: () => this.setState({ step: Math.min(4, st + 1) }), prev: () => this.setState({ step: Math.max(1, st - 1) }),
+      mSol: s.mints.sol, mUsdc: s.mints.usdc, mJup: s.mints.jup,
+      tSol: () => this.setState({ mints: { ...s.mints, sol: !s.mints.sol } }), tUsdc: () => this.setState({ mints: { ...s.mints, usdc: !s.mints.usdc } }), tJup: () => this.setState({ mints: { ...s.mints, jup: !s.mints.jup } }),
+      mintText: [s.mints.sol && 'SOL', s.mints.usdc && 'USDC', s.mints.jup && 'JUP'].filter(Boolean).join(', ') || 'no assets',
+      mintCount: [s.mints.sol, s.mints.usdc, s.mints.jup].filter(Boolean).length,
+      phase: s.phase, spent: s.spent.toLocaleString(), txc: s.txc, pct: Math.round(s.spent / 500 * 100), total: s.total,
+      showAllowed: s.allowed, showBlocked: s.blocked,
+      statusText: s.phase === 'fly' ? 'PROPOSAL IN FLIGHT · EVALUATING GATES' : s.phase === 'land' ? 'ALLOWED · 100 USDC MOVED · SIGNATURE RECORDED' : s.phase === 'block' ? 'REFUSED AT GATE 06 · SPEND_CAP_EXCEEDED · NOTHING MOVED' : 'IDLE · WAITING FOR THE AGENT',
+      fire: () => { if (s.phase !== 'idle') return; this.setState({ phase: 'fly', blocked: false, allowed: false });
+        setTimeout(() => this.setState({ phase: 'land', allowed: true, spent: Math.min(500, this.state.spent + 100), txc: this.state.txc + 1, total: this.state.total + 1 }), 1900);
+        setTimeout(() => this.setState({ phase: 'idle' }), 4200); },
+      force: () => { if (s.phase !== 'idle') return; this.setState({ phase: 'block', blocked: false, allowed: false });
+        setTimeout(() => this.setState({ blocked: true, total: this.state.total + 1 }), 1900);
+        setTimeout(() => this.setState({ phase: 'idle' }), 4200); },
+    };
+  }
+}
+</script>
+</body>
+</html>

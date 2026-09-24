@@ -1,0 +1,18 @@
+node_modules
+dist
+.vite
+.env
+.env.*
+!.env.example
+.DS_Store
+coverage
+target
+.anchor
+
+# Solana wallet keypairs (devnet/local signer secrets)
+executor.json
+owner.json
+id.json
+*-keypair.json
+backend/executor.json
+backend/owner.json

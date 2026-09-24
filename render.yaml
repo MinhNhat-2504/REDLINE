@@ -1,0 +1,128 @@
+# Render Blueprint: the whole REDLINE stack — Postgres, API, dashboard.
+# Create it once with Render → Blueprints → New Blueprint Instance.
+#
+# Values marked `sync: false` are deliberately not in git: set them in the
+# Render dashboard after the first deploy. Everything else is provisioned here.
+
+databases:
+  - name: redline-db
+    databaseName: redline
+    plan: free
+
+services:
+  # ---------------------------------------------------------------- API ----
+  - type: web
+    name: redline-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    # npm install, not ci: the lock is generated on npm 11 and older npm
+    # rejects its optional-peer layout for rpc-websockets/utf-8-validate.
+    buildCommand: npm install --no-audit --no-fund && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: redline-db
+          property: connectionString
+      # Render injects PORT; server.ts binds it on 0.0.0.0.
+      - key: CHAIN
+        value: solana
+      - key: SOLANA_RPC_URL
+        # https://api.devnet.solana.com works; a dedicated RPC avoids the
+        # throttling the public endpoint applies to shared cloud IPs.
+        sync: false
+      - key: SOLANA_WS_URL
+        sync: false
+      - key: REDLINE_PROGRAM_ID
+        value: Fj7MV8Z2a3RdH4W8VF2XKfWAsWHT3jxhoqGMcmb4WbS4
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "120"
+      # Guards write routes. Copy the generated value into the dashboard's
+      # VITE_API_KEY below — the two must match.
+      - key: REDLINE_API_KEY
+        generateValue: true
+      # Render has no persistent filesystem for a secret file: paste the
+      # keypair's JSON array itself as the value, not a path.
+      - key: EXECUTOR_KEYPAIR_PATH
+        sync: false
+      - key: DEMO_OWNER_KEYPAIR_PATH
+        sync: false
+      - key: DEMO_USDC_MINT
+        sync: false
+      - key: DEMO_OWNER_WALLET
+        sync: false
+      - key: DEMO_VAULT_PDA
+        sync: false
+      - key: DEMO_OPS_DESTINATION
+        sync: false
+      # The marketplace take rate. Unset PROTOCOL_TREASURY and the fee is
+      # zero and every rental pays the publisher in full — which is what a
+      # fork, or a local run, should do. Set it to the wallet that collects.
+      - key: PROTOCOL_TREASURY
+        sync: false
+      - key: PROTOCOL_FEE_BPS
+        value: "1000"
+      # Unset: the risk copilot falls back to its deterministic rules.
+      # Any OpenAI-compatible chat-completions endpoint works — Groq's free
+      # tier needs no card. Set all three together; the model name has to be
+      # one the endpoint serves.
+      #   OPENAI_BASE_URL  https://api.groq.com/openai/v1
+      #   OPENAI_MODEL     a model that provider lists
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_BASE_URL
+        sync: false
+      - key: OPENAI_MODEL
+        sync: false
+
+  # ---------------------------------------------------------- dashboard ----
+  - type: web
+    name: redline-dashboard
+    runtime: static
+    buildCommand: npm install --no-audit --no-fund && npm run build
+    staticPublishPath: ./dist
+    # Every value here is derived from redline-api, so there is nothing to fill
+    # in twice and the two services cannot drift apart.
+    envVars:
+      # RENDER_EXTERNAL_URL, not `property: host`: host resolves to the private
+      # network name (redline-api-xxxx), which a browser cannot reach.
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: redline-api
+          envVarKey: RENDER_EXTERNAL_URL
+      # Picks up the value Render generated for REDLINE_API_KEY.
+      - key: VITE_API_KEY
+        fromService:
+          type: web
+          name: redline-api
+          envVarKey: REDLINE_API_KEY
+      - key: VITE_SOLANA_RPC_URL
+        fromService:
+          type: web
+          name: redline-api
+          envVarKey: SOLANA_RPC_URL
+      # A mismatch here would silently derive vault and grant PDAs against a
+      # different program, so take it from the API rather than repeating it.
+      - key: VITE_REDLINE_PROGRAM_ID
+        fromService:
+          type: web
+          name: redline-api
+          envVarKey: REDLINE_PROGRAM_ID
+      - key: VITE_DEMO_USDC_MINT
+        fromService:
+          type: web
+          name: redline-api
+          envVarKey: DEMO_USDC_MINT
+      - key: VITE_DEMO_OPS_DESTINATION
+        fromService:
+          type: web
+          name: redline-api
+          envVarKey: DEMO_OPS_DESTINATION
+    routes:
+      # SPA fallback: every path serves index.html so client routing works.
+      - type: rewrite
+        source: /*
+        destination: /index.html

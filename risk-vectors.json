@@ -1,0 +1,215 @@
+{
+  "note": "Shared contract for the deterministic risk floor. backend/src/routes/risk.ts deterministic() and src/app/lib/risk-engine.ts assessPolicyLocally() are two implementations of the same rules — the server's answer, and the browser's fallback when the API cannot be reached. Nothing in the build makes them agree, so both test suites assert against this file. Change one implementation and its suite fails here, at the point the drift is introduced rather than in production where a client would gate signing on a verdict the server never gave.",
+  "bands": "score >= 80 BLOCK/CRITICAL, >= 60 REVIEW/HIGH, >= 35 MEDIUM, else LOW",
+  "vectors": [
+    {
+      "name": "narrow pilot policy — nothing scores",
+      "policy": {
+        "agentName": "Treasury Scout",
+        "strategy": "Monitor stablecoin yield",
+        "tokens": [
+          "SOL",
+          "USDC"
+        ],
+        "spendCapUsdc": 500,
+        "maxTransactions": 25,
+        "durationHours": 12,
+        "cooldownMinutes": 10
+      },
+      "score": 8,
+      "level": "LOW",
+      "decision": "ALLOW"
+    },
+    {
+      "name": "a four-figure cap starts to count",
+      "policy": {
+        "agentName": "Treasury Scout",
+        "strategy": "Monitor stablecoin yield",
+        "tokens": [
+          "USDC"
+        ],
+        "spendCapUsdc": 1500,
+        "maxTransactions": 25,
+        "durationHours": 12,
+        "cooldownMinutes": 10
+      },
+      "score": 14,
+      "level": "LOW",
+      "decision": "ALLOW"
+    },
+    {
+      "name": "cap past 2,500",
+      "policy": {
+        "agentName": "Treasury Scout",
+        "strategy": "Monitor stablecoin yield",
+        "tokens": [
+          "USDC"
+        ],
+        "spendCapUsdc": 3000,
+        "maxTransactions": 25,
+        "durationHours": 12,
+        "cooldownMinutes": 10
+      },
+      "score": 22,
+      "level": "LOW",
+      "decision": "ALLOW"
+    },
+    {
+      "name": "just under MEDIUM",
+      "policy": {
+        "agentName": "Treasury Scout",
+        "strategy": "Monitor stablecoin yield",
+        "tokens": [
+          "USDC"
+        ],
+        "spendCapUsdc": 3000,
+        "maxTransactions": 150,
+        "durationHours": 12,
+        "cooldownMinutes": 10
+      },
+      "score": 31,
+      "level": "LOW",
+      "decision": "ALLOW"
+    },
+    {
+      "name": "just into MEDIUM",
+      "policy": {
+        "agentName": "Treasury Scout",
+        "strategy": "Monitor stablecoin yield",
+        "tokens": [
+          "USDC"
+        ],
+        "spendCapUsdc": 3000,
+        "maxTransactions": 150,
+        "durationHours": 30,
+        "cooldownMinutes": 10
+      },
+      "score": 38,
+      "level": "MEDIUM",
+      "decision": "ALLOW"
+    },
+    {
+      "name": "half the ceiling is MEDIUM on its own",
+      "policy": {
+        "agentName": "Treasury Scout",
+        "strategy": "Monitor stablecoin yield",
+        "tokens": [
+          "USDC"
+        ],
+        "spendCapUsdc": 5000,
+        "maxTransactions": 25,
+        "durationHours": 12,
+        "cooldownMinutes": 10
+      },
+      "score": 38,
+      "level": "MEDIUM",
+      "decision": "ALLOW"
+    },
+    {
+      "name": "one unit under the ceiling stays signable",
+      "policy": {
+        "agentName": "Treasury Scout",
+        "strategy": "Monitor stablecoin yield",
+        "tokens": [
+          "USDC"
+        ],
+        "spendCapUsdc": 9999,
+        "maxTransactions": 25,
+        "durationHours": 30,
+        "cooldownMinutes": 10
+      },
+      "score": 45,
+      "level": "MEDIUM",
+      "decision": "ALLOW"
+    },
+    {
+      "name": "the wizard's maximum cap is REVIEW on its own — it used to score 22",
+      "policy": {
+        "agentName": "Treasury Scout",
+        "strategy": "Monitor stablecoin yield",
+        "tokens": [
+          "USDC"
+        ],
+        "spendCapUsdc": 10000,
+        "maxTransactions": 25,
+        "durationHours": 12,
+        "cooldownMinutes": 10
+      },
+      "score": 60,
+      "level": "HIGH",
+      "decision": "REVIEW"
+    },
+    {
+      "name": "just under BLOCK",
+      "policy": {
+        "agentName": "Treasury Scout",
+        "strategy": "Monitor stablecoin yield",
+        "tokens": [
+          "USDC"
+        ],
+        "spendCapUsdc": 10000,
+        "maxTransactions": 300,
+        "durationHours": 12,
+        "cooldownMinutes": 10
+      },
+      "score": 78,
+      "level": "HIGH",
+      "decision": "REVIEW"
+    },
+    {
+      "name": "ceiling cap, many transfers, open for days — BLOCK, reachable from the wizard",
+      "policy": {
+        "agentName": "Treasury Scout",
+        "strategy": "Monitor stablecoin yield",
+        "tokens": [
+          "USDC"
+        ],
+        "spendCapUsdc": 10000,
+        "maxTransactions": 300,
+        "durationHours": 100,
+        "cooldownMinutes": 10
+      },
+      "score": 94,
+      "level": "CRITICAL",
+      "decision": "BLOCK"
+    },
+    {
+      "name": "strategy wording alone adds risk",
+      "policy": {
+        "agentName": "Treasury Scout",
+        "strategy": "Leveraged perp hedging",
+        "tokens": [
+          "USDC"
+        ],
+        "spendCapUsdc": 500,
+        "maxTransactions": 25,
+        "durationHours": 12,
+        "cooldownMinutes": 10
+      },
+      "score": 26,
+      "level": "LOW",
+      "decision": "ALLOW"
+    },
+    {
+      "name": "everything at once, clamped at 100",
+      "policy": {
+        "agentName": "Treasury Scout",
+        "strategy": "Monitor stablecoin yield",
+        "tokens": [
+          "SOL",
+          "USDC",
+          "JUP",
+          "JTO",
+          "BONK"
+        ],
+        "spendCapUsdc": 40000,
+        "maxTransactions": 600,
+        "durationHours": 168,
+        "cooldownMinutes": 1
+      },
+      "score": 100,
+      "level": "CRITICAL",
+      "decision": "BLOCK"
+    }
+  ]
+}

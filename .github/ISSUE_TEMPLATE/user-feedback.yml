@@ -1,0 +1,61 @@
+name: REDLINE user feedback
+description: Share feedback after testing the REDLINE Devnet prototype.
+title: "[Feedback] "
+labels:
+  - feedback
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing REDLINE. Do not post wallet seed phrases, private keys, API keys, or personal financial information.
+  - type: dropdown
+    id: role
+    attributes:
+      label: Your role
+      options:
+        - DeFi user
+        - DAO or treasury operator
+        - Agent developer
+        - Blockchain developer
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: clarity
+    attributes:
+      label: How clear was the policy-building flow?
+      description: 1 is confusing; 5 is immediately clear.
+      options:
+        - 1 — Confusing
+        - 2
+        - 3
+        - 4
+        - 5 — Immediately clear
+    validations:
+      required: true
+  - type: textarea
+    id: trust
+    attributes:
+      label: What increased or reduced your trust?
+      placeholder: Mention the risk verdict, limits, wallet flow, or on-chain proof.
+    validations:
+      required: true
+  - type: textarea
+    id: blocker
+    attributes:
+      label: What was the biggest usability blocker?
+    validations:
+      required: true
+  - type: textarea
+    id: value
+    attributes:
+      label: Would this solve a real problem for you?
+      placeholder: Describe the workflow and what you would pay for, if anything.
+    validations:
+      required: true
+  - type: textarea
+    id: improvement
+    attributes:
+      label: One change REDLINE should make next
+    validations:
+      required: true

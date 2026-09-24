@@ -1,0 +1,281 @@
+// REDLINE data model — subset of ERD v2 needed for the demo slice.
+// Immutable versions (agent_version, policy_version) are separated from
+// mutable state (grant, run) and from chain evidence (chain_transaction).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Owner {
+  id        String       @id @default(cuid())
+  wallet    String       @unique
+  createdAt DateTime     @default(now())
+  vaults    Vault[]
+  grants    AgentGrant[]
+}
+
+model Vault {
+  id        String       @id @default(cuid())
+  ownerId   String
+  owner     Owner        @relation(fields: [ownerId], references: [id])
+  vaultPda  String       @unique
+  network   String       @default("devnet")
+  createdAt DateTime     @default(now())
+  grants    AgentGrant[]
+}
+
+// One immutable published agent build. Editing code/model/config => new row.
+model AgentVersion {
+  id              String         @id @default(cuid())
+  name            String
+  version         String
+  strategy        String
+  modelHash       String
+  codeHash        String
+  configHash      String
+  // The build fingerprint: sha256(modelHash|codeHash|configHash). It is NOT
+  // unique on its own any more — two publishers may offer the identical build,
+  // and each needs a row they own. Uniqueness is per (build, publisher), so a
+  // second wallet publishing the same bytes gets its own listing instead of
+  // silently inheriting someone else's.
+  agentHash       String
+  // The wallet that published this build. Nullable only because rows written
+  // before publishing required a signature have no publisher to name; those
+  // are shown as unclaimed rather than attributed to whoever asks. Every new
+  // row sets it from the caller's wallet session, never from the request body.
+  publisherWallet String?
+  createdAt       DateTime       @default(now())
+  listings        AgentListing[]
+  grants          AgentGrant[]
+  reviews         AgentReview[]  @relation("AgentVersionReviews")
+
+  @@unique([agentHash, publisherWallet])
+  @@index([publisherWallet])
+  @@index([agentHash])
+}
+
+model AgentListing {
+  id              String          @id @default(cuid())
+  agentVersionId  String
+  agentVersion    AgentVersion    @relation(fields: [agentVersionId], references: [id])
+  priceLamports   BigInt          @default(0)
+  // Wallet that receives the rental payment. Null on the auto-created default
+  // listing until the publisher claims it by setting a price.
+  developerWallet String?
+  // Only ever "active" today. Kept because GET /listings filters on it and a
+  // publisher will need to withdraw a listing; the moderation pipeline this
+  // once advertised (draft/review/suspended) was never reachable, so it is no
+  // longer claimed here.
+  status          String          @default("active") // active | withdrawn
+  createdAt       DateTime        @default(now())
+  hires           HireAgreement[]
+  reviews         AgentReview[]
+}
+
+model HireAgreement {
+  id                  String       @id @default(cuid())
+  listingId           String
+  listing             AgentListing @relation(fields: [listingId], references: [id])
+  ownerWallet         String
+  // Signature of the on-chain payment that funded this hire. Verified against
+  // the listing price before the row is created when CHAIN=solana.
+  paymentSignature    String?      @unique
+  // What the renter actually signed away, and how that one payment split.
+  // Recorded per rental rather than recomputed from the current fee, because
+  // the rate can change and a receipt must keep saying what was charged.
+  paidLamports        BigInt       @default(0)
+  publisherLamports   BigInt       @default(0)
+  protocolFeeLamports BigInt       @default(0)
+  protocolFeeBps      Int          @default(0)
+  startsAt            DateTime     @default(now())
+  endsAt              DateTime
+  // The term is what decides whether a rental is live — see isLiveHire() in
+  // routes/market-stats.ts. This column exists so a rental can be cancelled
+  // before its end date; nothing writes it yet, which is why counting "active"
+  // rows by this flag reported every rental ever paid for as still running.
+  status              String       @default("active") // active | cancelled
+  grants              AgentGrant[]
+  review              AgentReview?
+}
+
+// A renter's verdict on an agent they actually paid for.
+//
+// The hire relation is the whole point: `hireId` is unique, so one rental buys
+// exactly one review and a wallet that never rented cannot leave one at all.
+// That is what separates this from a star field anyone can spam. The objective
+// half of an agent's reputation is not stored here — it is derived from
+// PolicyDecision / ChainTransaction rows, which no reviewer can influence.
+model AgentReview {
+  id             String        @id @default(cuid())
+  listingId      String
+  listing        AgentListing  @relation(fields: [listingId], references: [id])
+  agentVersionId String
+  agentVersion   AgentVersion? @relation("AgentVersionReviews", fields: [agentVersionId], references: [id])
+  hireId         String        @unique
+  hire           HireAgreement @relation(fields: [hireId], references: [id])
+  reviewerWallet String
+  rating         Int // 1..5, validated in the route
+  comment        String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([listingId])
+  @@index([agentVersionId])
+  @@index([reviewerWallet])
+}
+
+// Canonical policy the owner signed. policyHash is what goes on-chain.
+model PolicyVersion {
+  id              String       @id @default(cuid())
+  policyHash      String       @unique
+  canonicalJson   String
+  spendCapUnits   BigInt
+  maxTransactions Int
+  cooldownSeconds Int
+  expiresAt       DateTime
+  allowedMints    String // JSON string[]
+  allowedDests    String // JSON string[]
+  createdAt       DateTime     @default(now())
+  grants          AgentGrant[]
+}
+
+// Binds exactly one owner, vault, agent version, policy version, hire.
+model AgentGrant {
+  id               String              @id @default(cuid())
+  ownerId          String
+  owner            Owner               @relation(fields: [ownerId], references: [id])
+  vaultId          String
+  vault            Vault               @relation(fields: [vaultId], references: [id])
+  agentVersionId   String
+  agentVersion     AgentVersion        @relation(fields: [agentVersionId], references: [id])
+  policyVersionId  String
+  policyVersion    PolicyVersion       @relation(fields: [policyVersionId], references: [id])
+  hireId           String?
+  hire             HireAgreement?      @relation(fields: [hireId], references: [id])
+  grantPda         String              @unique
+  agentId          String // 16-byte PDA seed, hex
+  executorPubkey   String
+  createSignature  String?
+  // When this grant's window closes, mirrored from the program at creation.
+  // Lives here and not only on PolicyVersion because that row is shared by
+  // every grant with the same policy shape: a 24h policy signed on Monday and
+  // again on Wednesday are one PolicyVersion but two expiries. Nullable only
+  // for rows written before the column existed; readers fall back to the
+  // policy's value for those.
+  expiresAt        DateTime?
+  // Mirror of on-chain counters, refreshed by the indexer. Chain is the truth.
+  spentUnits       BigInt              @default(0)
+  transactionCount Int                 @default(0)
+  nextNonce        Int                 @default(0)
+  lastExecutionAt  DateTime?
+  revoked          Boolean             @default(false)
+  createdAt        DateTime            @default(now())
+  runs             AgentRun[]
+  intents          TransactionIntent[]
+}
+
+model AgentRun {
+  id        String              @id @default(cuid())
+  grantId   String
+  grant     AgentGrant          @relation(fields: [grantId], references: [id])
+  mode      String // scripted | llm
+  status    String              @default("running") // running | stopped | failed
+  startedAt DateTime            @default(now())
+  endedAt   DateTime?
+  intents   TransactionIntent[]
+}
+
+model TransactionIntent {
+  id          String          @id @default(cuid())
+  runId       String?
+  run         AgentRun?       @relation(fields: [runId], references: [id])
+  grantId     String
+  grant       AgentGrant      @relation(fields: [grantId], references: [id])
+  mint        String
+  amountUnits BigInt
+  destination String
+  nonce       Int
+  reason      String          @default("")
+  intentHash  String
+  createdAt   DateTime        @default(now())
+  decision    PolicyDecision?
+
+  @@index([intentHash])
+}
+
+model PolicyDecision {
+  id               String            @id @default(cuid())
+  intentId         String            @unique
+  intent           TransactionIntent @relation(fields: [intentId], references: [id])
+  allow            Boolean
+  reasonCode       String // OK | REVOKED | EXPIRED | NONCE_REPLAY | ...
+  ruleSnapshotHash String
+  stage            String // precheck | onchain
+  createdAt        DateTime          @default(now())
+  chainTx          ChainTransaction?
+}
+
+// Only ALLOW decisions produce a successful chain tx. A DENY that was still
+// submitted (demo path) is stored with result=failed and the program error.
+model ChainTransaction {
+  id         String         @id @default(cuid())
+  decisionId String         @unique
+  decision   PolicyDecision @relation(fields: [decisionId], references: [id])
+  signature  String         @unique
+  slot       BigInt?
+  programId  String
+  result     String // success | failed
+  error      String?
+  executedAt DateTime       @default(now())
+}
+
+// Append-only. Never updated or deleted.
+model AuditEvent {
+  id             String   @id @default(cuid())
+  actorType      String // owner | agent | admin | chain | system
+  actorId        String
+  eventType      String // grant.created | intent.created | decision.precheck | tx.confirmed | ...
+  subjectType    String
+  subjectId      String
+  payloadHash    String
+  payload        String
+  chainSignature String?
+  createdAt      DateTime @default(now())
+
+  @@index([subjectType, subjectId])
+}
+
+// Wallet sign-in. A nonce is issued for one wallet, signed once, and consumed;
+// keeping the row after use is what makes a replayed signature detectable.
+model AuthNonce {
+  nonce     String    @id
+  wallet    String
+  // The exact bytes handed to the wallet. Stored rather than rebuilt at
+  // verification: the issued-at stamp in the text comes from the API process
+  // while `createdAt` comes from the database clock, so a reconstruction is
+  // never quite the string that was signed.
+  //
+  // Nullable only so the column could be added to a live table. Every row this
+  // code writes sets it; a row without one is a challenge from before the
+  // column existed and is refused rather than verified against a guess.
+  message   String?
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+// Sessions are stored by SHA-256 of the token, never the token itself, so a
+// dump of this table does not hand anyone a working session.
+model Session {
+  tokenHash String   @id
+  wallet    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([wallet])
+}

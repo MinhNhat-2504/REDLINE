@@ -1,0 +1,163 @@
+{
+  "pages": [
+    {
+      "id": "screens",
+      "name": "Screens"
+    },
+    {
+      "id": "system",
+      "name": "Design System"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "01 · Protocol",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 4900,
+      "page": "screens",
+      "is_interactive": true
+    },
+    {
+      "file": "Marketplace.dc.html",
+      "title": "02 · Marketplace",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 1300,
+      "page": "screens",
+      "is_interactive": true
+    },
+    {
+      "file": "Agents.dc.html",
+      "title": "03 · Agents",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "screens",
+      "is_interactive": true
+    },
+    {
+      "file": "Guardrails.dc.html",
+      "title": "04 · Guardrails",
+      "x": 4680,
+      "y": 0,
+      "w": 1440,
+      "h": 1200,
+      "page": "screens",
+      "is_interactive": true
+    },
+    {
+      "file": "Treasury.dc.html",
+      "title": "05 · Treasury",
+      "x": 1560,
+      "y": 1460,
+      "w": 1440,
+      "h": 1180,
+      "page": "screens",
+      "is_interactive": true
+    },
+    {
+      "file": "Audit.dc.html",
+      "title": "06 · Audit",
+      "x": 3120,
+      "y": 1060,
+      "w": 1440,
+      "h": 1720,
+      "page": "screens",
+      "is_interactive": true
+    },
+    {
+      "file": "Analytics.dc.html",
+      "title": "07 · Analytics",
+      "x": 4680,
+      "y": 1360,
+      "w": 1440,
+      "h": 1120,
+      "page": "screens",
+      "is_interactive": false
+    },
+    {
+      "file": "Settings.dc.html",
+      "title": "08 · Settings",
+      "x": 1560,
+      "y": 2800,
+      "w": 1440,
+      "h": 900,
+      "page": "screens",
+      "is_interactive": true
+    },
+    {
+      "file": "Copilot.dc.html",
+      "title": "09 · Copilot (local model)",
+      "x": 3120,
+      "y": 2940,
+      "w": 1440,
+      "h": 1120,
+      "page": "screens",
+      "is_interactive": true
+    },
+    {
+      "file": "Models.dc.html",
+      "title": "10 · Model profiling",
+      "x": 4680,
+      "y": 2640,
+      "w": 1440,
+      "h": 1400,
+      "page": "screens",
+      "is_interactive": true
+    },
+    {
+      "file": "Profile.dc.html",
+      "title": "11 · Profile",
+      "x": 1560,
+      "y": 3860,
+      "w": 1440,
+      "h": 1120,
+      "page": "screens",
+      "is_interactive": true
+    },
+    {
+      "file": "DesignSystem.dc.html",
+      "title": "Astral Depth · System",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 2120,
+      "page": "system"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "page": "screens",
+      "x": 0,
+      "y": -320,
+      "w": 640,
+      "text": "REDLINE — Astral Depth redesign\nKeeps the Astral palette (navy / champagne gold / Georgia italic) and adds: a 3-tier shadow scale, layered 3D depth on panels & KPI tiles, one easing curve for all motion, and a strict 1440 / 12-col grid (32 gutter · 24 gap).\nButtons are tactile: 4–5 px extruded edge that collapses on press, plus a ripple. Every panel carries a stepped route-coloured extrusion; rows lift toward the viewer on hover."
+    },
+    {
+      "id": "proto-notes",
+      "page": "screens",
+      "x": 1560,
+      "y": -320,
+      "w": 560,
+      "text": "NEW · Copilot chats with a model running on your machine (Ollama, OpenAI-compatible endpoint the backend already supports) · Models profiles that model: speed, calibration vs. gate outcomes, adversarial suite · Profile is the owner's wallet identity.\nEach operational page has its own layout: Guardrails = policy deck + wizard + live transfer lane · Treasury = vault scene (cubes = balance) · Audit = timeline stream · Marketplace = spotlight + coverflow · Agents = ID card that flips · Analytics = bento · Settings = sidebar tabs.\nTransaction fx to try: Guardrails ▸ Start agent / Force over cap · Treasury ▸ Refill / Withdraw · Marketplace ▸ Rent with wallet · Protocol ▸ Run simulation."
+    },
+    {
+      "id": "sys-note",
+      "page": "system",
+      "x": 1560,
+      "y": 0,
+      "w": 420,
+      "text": "Map to code:\n--sh-1/2/3, --sh-gold → theme.css\n.panel / .panel-3d / .kpi / .gate → replace the 5 stacked CSS layers (index → astral → layout → hoyoverse → pixel-onchain) with one astral-depth.css."
+    }
+  ],
+  "launch": {
+    "view": "focused",
+    "file": "Main.dc.html"
+  }
+}
