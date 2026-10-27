@@ -80,7 +80,7 @@ export async function processIntent(
   await audit({
     actorType: "agent", actorId: chain.executorPubkey, eventType: "intent.created",
     subjectType: "intent", subjectId: row.id,
-    payload: { grantId, intentHash: hash, mint: intent.mint, amountUnits: intent.amountUnits, destination: intent.destination, nonce: intent.nonce, reason: intent.reason ?? "" },
+    payload: { grantId, runId: opts.runId ?? null, intentHash: hash, mint: intent.mint, amountUnits: intent.amountUnits, destination: intent.destination, nonce: intent.nonce, reason: intent.reason ?? "" },
   });
 
   const precheck = evaluateIntent(state, intent, now());
@@ -88,7 +88,7 @@ export async function processIntent(
   await audit({
     actorType: "system", actorId: "policy-engine", eventType: "decision.precheck",
     subjectType: "intent", subjectId: row.id,
-    payload: { grantId, allow: precheck.allow, reasonCode: precheck.reasonCode, gate: precheck.gate, message: precheck.message, ruleSnapshotHash: snapshot },
+    payload: { grantId, runId: opts.runId ?? null, allow: precheck.allow, reasonCode: precheck.reasonCode, gate: precheck.gate, message: precheck.message, ruleSnapshotHash: snapshot },
   });
 
   const prove = opts.proveOnChain === true && process.env.ONCHAIN_PROOF !== "off";
@@ -126,7 +126,7 @@ export async function processIntent(
   await audit({
     actorType: "chain", actorId: chain.programId, eventType: result.success ? "tx.confirmed" : "tx.rejected",
     subjectType: "intent", subjectId: row.id, chainSignature: result.signature,
-    payload: { grantId, signature: result.signature, success: result.success, reasonCode: result.reasonCode, error: result.error ?? null, slot: result.slot ?? null, counters: fresh ? { spentUnits: fresh.spentUnits, transactionCount: fresh.transactionCount, nextNonce: fresh.nextNonce } : null },
+    payload: { grantId, runId: opts.runId ?? null, amountUnits: intent.amountUnits, mint: intent.mint, destination: intent.destination, signature: result.signature, success: result.success, reasonCode: result.reasonCode, error: result.error ?? null, slot: result.slot ?? null, counters: fresh ? { spentUnits: fresh.spentUnits, transactionCount: fresh.transactionCount, nextNonce: fresh.nextNonce } : null },
   });
 
   return { intentId: row.id, intentHash: hash, precheck, submitted: true, signature: result.signature, onchainSuccess: result.success, onchainReason: result.reasonCode };

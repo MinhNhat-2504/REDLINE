@@ -285,7 +285,10 @@ export class SolanaChain implements ChainAdapter {
     const [vaultAta] = await findAssociatedTokenPda({ mint: mint as Address, owner: vaultPda as Address, tokenProgram: TOKEN_PROGRAM_ADDRESS });
     const { value } = await withRetry(() => this.rpc.getAccountInfo(vaultPda as Address, { encoding: "base64" }).send(), "getAccountInfo");
     let balanceUnits: string | null = null;
-    try { balanceUnits = await this.tokenBalance(vaultAta); } catch { balanceUnits = null; }
+    try {
+      const { value: tokenAccount } = await this.rpc.getAccountInfo(vaultAta, { encoding: "base64", commitment: "confirmed" }).send();
+      balanceUnits = tokenAccount ? await this.tokenBalance(vaultAta) : "0";
+    } catch { balanceUnits = null; }
     return { vaultAta, balanceUnits, exists: !!value };
   }
 

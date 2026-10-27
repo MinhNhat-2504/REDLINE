@@ -1,3 +1,6 @@
+import { agentTaskSummary } from "../lib/task-summary";
+import { AgentTaskCard } from "../components/AgentTaskCard";
+import { ActivityPage } from "../components/ActivityPage";
 import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
 import { useClient } from "@solana/react";
 import {
@@ -40,13 +43,24 @@ import { RatingBadge, RatingDetail } from "../components/AgentRating";
 import { PolicyLab } from "../components/PolicyLab";
 import { ProtocolSpine } from "../components/ProtocolSpine";
 import { OpenBook, VoxelCube, WaterDivider } from "../components/depth";
+import { agentAccess, relatedAgent } from "../lib/agent-access";
+import { useWalletResource } from "../lib/useWalletResource";
 import { useRealAgents } from "../lib/agents";
 import { api, fmtUsdc, grantExpiresAt, short, type Analytics, type AuditRow } from "../lib/api";
 import { useSignedIn } from "../lib/useSignedIn";
 import { explorerTransactionUrl, type AppClient } from "../solana/client";
-import { useT } from "../i18n/LanguageContext";
+import { useLang, useT } from "../i18n/LanguageContext";
+
+const fetchAgentAccess = (owner: string) => api.hires(owner);
+const fetchCatalog = () => api.listings();
 
 const VI: Record<string, string> = {
+  "New policy": "Tạo quyền mới",
+  "Agent details": "Thông tin agent",
+  "Set spending limits": "Đặt hạn mức chi",
+  "Technical identity": "Định danh kỹ thuật",
+  "Close publisher": "Đóng biểu mẫu xuất bản",
+  "Spending policies": "Chính sách chi tiêu",
   "The Citadel": "Thành Trì",
   "The Vault": "Kho Bạc",
   "The Observatory": "Đài Quan Sát",
@@ -600,10 +614,14 @@ export function ArtifactAgents() {
   // from a typed one, and publishing is what puts a build on a marketplace
   // under a name that gets paid. So the button waits for a signature.
   const signedIn = useSignedIn(wallet);
-  const { agents, loading, error, reload } = useRealAgents();
-  const [onlyMine, setOnlyMine] = useState(false);
-  const [selected, setSelected] = useState("");
-  const [flip, setFlip] = useState(false);
+  const { agents, grants, loading, error, reload } = useRealAgents(wallet);
+  const accessData = useWalletResource(wallet, signedIn, fetchAgentAccess, 0);
+  const catalog = useWalletResource("catalog", true, fetchCatalog, 0);
+  const { lang } = useLang();
+  const accessText = (status: ReturnType<typeof agentAccess>) => ({ owned: lang === "vi" ? "Của bạn" : "Owned by you", rented: lang === "vi" ? "Đang thuê" : "Rental active", expired: lang === "vi" ? "Hết hạn thuê" : "Rental expired", "rent-required": lang === "vi" ? "Cần thuê trước" : "Rental required", available: lang === "vi" ? "Có thể tạo chính sách" : "Available for policy" })[status];
+  const [onlyMine, setOnlyMine] = useState(() => new URLSearchParams(location.hash.split("?")[1]).get("view") !== "catalog");
+  const [selected, setSelected] = useState(() => new URLSearchParams(location.hash.split("?")[1]).get("agent") ?? "");
+  const [showPublisher, setShowPublisher] = useState(false);
   const [name, setName] = useState("");
   const [version, setVersion] = useState("v1.0.0");
   const [strategy, setStrategy] = useState("");
@@ -612,10 +630,12 @@ export function ArtifactAgents() {
   // The detail card follows the visible rail. Without this, filtering to
   // "mine" while a stranger's agent was selected left the card showing an
   // agent that is no longer in the list beside it.
-  const visibleAgents = onlyMine ? agents.filter((a) => a.isMine) : agents;
+  const visibleAgents = onlyMine ? agents.filter(a => relatedAgent(a.id, signedIn ? wallet : "", a.publisherWallet, grants, accessData.data ?? [])) : agents;
   const picked = agents.find((a) => a.id === selected);
   const agent =
     picked && visibleAgents.includes(picked) ? picked : visibleAgents[0];
+  const access = agent ? agentAccess(agent, wallet, accessData.data ?? [], catalog.data ?? []) : "available";
+  const accessUnknown = !catalog.data || !accessData.data && signedIn || catalog.error || accessData.error;
   const publish = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!signedIn) {
@@ -638,7 +658,7 @@ export function ArtifactAgents() {
         config: { strategy: strategy.trim() },
       });
       await reload();
-      setSelected(result.agent.id);
+      setSelected(result.agent.id); setOnlyMine(true);
       setName("");
       setStrategy("");
       setNotice(tr("Version published to the registry."));
@@ -649,22 +669,22 @@ export function ArtifactAgents() {
     }
   };
   return (
-    <div className="agents-grid">
+    <div className={`agents-grid simple-agents${showPublisher ? " is-publishing" : ""}`}>
       <aside>
         <div className="eyebrow">
-          {tr("VERSIONS")} · {visibleAgents.length}
+          {onlyMine ? (lang === "vi" ? "LIÊN QUAN ĐẾN VÍ" : "RELATED TO YOUR WALLET") : (lang === "vi" ? "DANH MỤC AGENT" : "AGENT CATALOG")} · {visibleAgents.length}
           {onlyMine && agents.length !== visibleAgents.length
             ? ` ${tr("OF")} ${agents.length}`
             : ""}
         </div>
-        {signedIn && (
+        {(
           <button
             className="btn btn-ghost btn-sm full-button"
             aria-pressed={onlyMine}
             onClick={() => setOnlyMine((v) => !v)}
           >
             <Fingerprint size={12} />
-            {onlyMine ? tr("Showing only mine") : tr("Show only mine")}
+            {onlyMine ? (lang === "vi" ? "Khám phá danh mục agent" : "Explore agent catalog") : (lang === "vi" ? "Xem agent liên quan đến ví" : "Show my related agents")}
           </button>
         )}
         <div className="rail-list">
@@ -683,7 +703,6 @@ export function ArtifactAgents() {
               aria-pressed={a.id === agent?.id}
               onClick={() => {
                 setSelected(a.id);
-                setFlip(false);
               }}
             >
               <span className="av">
@@ -695,22 +714,24 @@ export function ArtifactAgents() {
                   {a.isMine && <span className="chip chip-gold">{tr("MINE")}</span>}
                 </b>
                 <small>
-                  {a.version} · {short(a.agentHash, 4)}{" "}
+                  {a.version}{" "}
                   <RatingBadge rating={a.rating} />
                 </small>
               </span>
               <span className="n">{a.totalGrants} gr</span>
             </button>
           ))}
-          {onlyMine && !visibleAgents.length && !loading && (
-            <Empty>{tr("You have not published a version with this wallet.")}</Empty>
-          )}
+          {onlyMine && !visibleAgents.length && !loading && <div className="ux-agent-empty"><h2>{lang === "vi" ? "Ch\u01b0a c\u00f3 agent trong v\u00ed n\u00e0y" : "No agents for this wallet yet"}</h2><p>{lang === "vi" ? "Th\u1eed demo tr\u01b0\u1edbc ho\u1eb7c ch\u1ecdn m\u1ed9t agent c\u00f3 s\u1eb5n \u0111\u1ec3 thi\u1ebft l\u1eadp." : "Try the demo first, or choose an available agent to set up."}</p><a className="simple-primary" href="#/protocol?demo=1">{lang === "vi" ? "Th\u1eed kh\u00f4ng c\u1ea7n v\u00ed" : "Try without a wallet"}</a><button type="button" className="simple-secondary" onClick={() => setOnlyMine(false)}>{lang === "vi" ? "Kh\u00e1m ph\u00e1 agent c\u00f3 s\u1eb5n" : "Explore available agents"}</button></div>}
         </div>
+        <details className="ux-creator-tools"><summary>{lang === "vi" ? "D\u00e0nh cho ng\u01b0\u1eddi t\u1ea1o agent" : "For agent creators"}</summary>
         <button
           className="btn btn-ghost full-button"
-          onClick={() => document.getElementById("publish-name")?.focus()}
+          onClick={() => setShowPublisher(value => !value)}
+          aria-expanded={showPublisher}
+          aria-controls="agent-publisher"
         >
-          <Plus size={12} />{tr("Publish agent version")}</button>
+          <Plus size={12} />{tr(showPublisher ? "Close publisher" : "Publish agent version")}</button>
+        </details>
         {loading && <Empty>{tr("Loading versions…")}</Empty>}
         {error && (
           <p role="alert" className="error-note">
@@ -721,87 +742,16 @@ export function ArtifactAgents() {
       <div>
         {agent ? (
           <>
-            <div className="idstage">
-              <div
-                className="idcard"
-                data-flip={flip}
-                style={vars({ "--acc": "14,145,205" })}
-                role="button"
-                tabIndex={0}
-                aria-label={`${tr("Flip identity card for")} ${agent.name}`}
-                aria-pressed={flip}
-                onClick={() => setFlip((v) => !v)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setFlip((v) => !v);
-                  }
-                }}
-              >
-                <div className="face front" inert={flip}>
-                  <div className="kick">
-                    <span>{tr("AGENT IDENTITY")} · {agent.version}</span>
-                    <span
-                      className={`chip ${agent.activeGrants ? "chip-ok" : "chip-dim"}`}
-                    >
-                      {agent.activeGrants} {tr("ACTIVE GRANTS")}
-                    </span>
-                  </div>
-                  <div className="avatar">
-                    <VoxelCube size={52} />
-                    <VoxelCube size={32} tone="info" />
-                  </div>
-                  <h2>
-                    {agent.name}
-                    <span>{agent.strategy}</span>
-                  </h2>
-                  <p className="help publisher-line">
-                    {agent.isMine
-                      ? tr("Published by you")
-                      : agent.publisherWallet
-                        ? `${tr("Published by")} ${short(agent.publisherWallet, 4)}`
-                        : tr("Unclaimed — published before publishing required a signature")}
-                  </p>
-                  <div className="stat4">
-                    {[
-                      [tr("ACTIVE"), agent.activeGrants],
-                      [tr("TOTAL GRANTS"), agent.totalGrants],
-                      [
-                        tr("SPENT"),
-                        `${agent.totalSpentUsdc.toLocaleString()} USDC`,
-                      ],
-                      [tr("TRANSFERS"), agent.totalTx],
-                    ].map(([l, v]) => (
-                      <div className="stat" key={l}>
-                        <small>{l}</small>
-                        <b>{v}</b>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="hint">
-                    <RefreshCw size={11} />{tr("CLICK THE CARD · SEE HOW THE HASH IS BUILT")}</div>
-                </div>
-                <div className="face back" inert={!flip}>
-                  <div className="kick">
-                    <span>{tr("AGENT HASH · SHA-256 · IMMUTABLE")}</span>
-                  </div>
-                  <h3>
-                    {agent.name} · {agent.version}
-                  </h3>
-                  <code>{agent.agentHash}</code>
-                  <div className="formula">
-                    <span>modelRef</span>
-                    <b>+</b>
-                    <span>codeRef</span>
-                    <b>+</b>
-                    <span>config</span>
-                  </div>
-                  <p className="help">{tr("Every grant binds to this exact build. A change in model, code reference or configuration produces a different identity.")}</p>
-                  <div className="hint">
-                    <RefreshCw size={11} />{tr("CLICK TO FLIP BACK")}</div>
-                </div>
-              </div>
-            </div>
+            <section className="agent-summary" aria-label={tr("Agent details")}>
+              <span className="simple-eyebrow">{tr("Agent details")}</span>
+              <h2>{agent.name}<small>{agent.version}</small></h2>
+              <details className="compact-agent-about"><summary>{lang === "vi" ? "Gi\u1edbi thi\u1ec7u agent" : "About this agent"}</summary><p>{agent.strategy}</p></details>
+              <AgentTaskCard grants={agent.grants} owner={wallet} verified={signedIn} />
+              <p className="p1-access" role="status">{accessUnknown ? (lang === "vi" ? "Chưa xác minh được điều kiện sử dụng." : "Access eligibility has not been verified.") : accessText(access)}</p>
+              {accessUnknown ? <button className="simple-secondary" disabled>{lang === "vi" ? "Chờ xác minh" : "Awaiting verification"}</button> : <a className={signedIn && agentTaskSummary(agent.grants, wallet).policyCount > 0 && access !== "expired" && access !== "rent-required" ? "simple-secondary compact-new-policy" : "simple-primary"} href={access === "expired" || access === "rent-required" ? `#/marketplace?agent=${encodeURIComponent(agent.id)}` : `#/guardrails?agent=${encodeURIComponent(agent.id)}`}>{access === "expired" || access === "rent-required" ? (lang === "vi" ? "Thuê agent trước" : "Rent agent first") : tr(signedIn && agentTaskSummary(agent.grants, wallet).policyCount > 0 ? "New policy" : "Set spending limits")}<ArrowRight size={16} /></a>}
+              <details className="agent-identity"><summary>{tr("Technical identity")}</summary><code>{agent.agentHash}</code><p>{agent.isMine ? tr("Published by you") : agent.publisherWallet ? `${tr("Published by")} ${short(agent.publisherWallet, 4)}` : tr("Unclaimed — published before publishing required a signature")}</p><p>{tr("Every grant binds to this exact build. A change in model, code reference or configuration produces a different identity.")}</p></details>
+            </section>
+            <details className="agent-extra"><summary>{tr("Reputation")}<RatingBadge rating={agent.rating} /></summary>
             <Panel
               title={tr("Reputation")}
               meta={<RatingBadge rating={agent.rating} />}
@@ -812,8 +762,9 @@ export function ArtifactAgents() {
                 <Empty>{tr("No policy decisions and no renter reviews recorded yet.")}</Empty>
               )}
             </Panel>
+            </details>
             <Panel
-              title={tr("Grants bound to this build")}
+              title={tr("Spending policies")}
               meta={<span className="chip chip-gold">{agent.totalGrants}</span>}
             >
               {agent.grants.length ? (
@@ -855,7 +806,7 @@ export function ArtifactAgents() {
           </Panel>
         )}
       </div>
-      <aside>
+      {showPublisher && <aside id="agent-publisher">
         <Panel
           className="pubform"
           title={tr("Publish a new version")}
@@ -864,6 +815,7 @@ export function ArtifactAgents() {
           <form onSubmit={publish}>
             <label className="field">{tr("Name")}<input
                 id="publish-name"
+                autoFocus
                 className="in"
                 required
                 maxLength={120}
@@ -921,7 +873,7 @@ export function ArtifactAgents() {
             )}
           </form>
         </Panel>
-      </aside>
+      </aside>}
     </div>
   );
 }
@@ -1069,179 +1021,7 @@ export function ArtifactAnalytics() {
 
 const isRejected = (row: AuditRow) => /reject|fail|deny/.test(row.eventType) || row.payload.allow === false;
 
-export function ArtifactAudit() {
-  const tr = useT(VI);
-  const [rows, setRows] = useState<AuditRow[]>([]),
-    [query, setQuery] = useState(""),
-    [kind, setKind] = useState("all"),
-    [selected, setSelected] = useState<AuditRow | null>(null),
-    [error, setError] = useState(""),
-    [loading, setLoading] = useState(true),
-    [limit, setLimit] = useState(100);
-  const load = useCallback(async () => {
-    try {
-      setRows(
-        (await api.audit()).sort((a, b) =>
-          b.createdAt.localeCompare(a.createdAt),
-        ),
-      );
-      setError("");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : tr("Unable to load events"));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-  useEffect(() => {
-    void load();
-    const t = setInterval(load, 15000);
-    return () => clearInterval(t);
-  }, [load]);
-  const filtered = rows.filter(
-    (r) =>
-      (kind === "all" ||
-        (kind === "chain"
-          ? r.eventType.startsWith("chain.")
-          : kind === "rejected"
-            ? isRejected(r)
-            : r.actorType === "owner")) &&
-      `${r.eventType} ${r.subjectId} ${r.chainSignature} ${JSON.stringify(r.payload)}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
-  );
-  return (
-    <div className="audit-workspace">
-      <div className="kpi-row">
-        {[
-          [tr("Total events"), rows.length],
-          [tr("On-chain signatures"), rows.filter((r) => r.chainSignature).length],
-          [tr("Owner actions"), rows.filter((r) => r.actorType === "owner").length],
-          [
-            tr("Rejected / failed"),
-            rows.filter((r) => isRejected(r)).length,
-          ],
-        ].map(([label, value]) => (
-          <div className="kpi" key={label}>
-            <small>{label}</small>
-            <strong>{value}</strong>
-          </div>
-        ))}
-      </div>
-      <div className="audit-toolbar">
-        <label className="search">
-          <Search size={15} />
-          <input
-            aria-label={tr("Search audit events")}
-            placeholder={tr("Search signatures, events, reason codes…")}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </label>
-        <div className="pill-row">
-          {["all", "chain", "owner", "rejected"].map((k) => (
-            <button
-              className="btn btn-ghost btn-sm"
-              key={k}
-              aria-pressed={kind === k}
-              onClick={() => setKind(k)}
-            >
-              {tr(k)}
-            </button>
-          ))}
-        </div>
-        <button className="btn btn-ghost" onClick={() => void load()}>
-          <RefreshCw size={14} />{tr("Refresh")}</button>
-      </div>
-      {error && (
-        <p className="error-note" role="alert">
-          {error}
-        </p>
-      )}
-      <div className="audit-columns">
-        <Panel
-          title={tr("Chain event stream")}
-          meta={
-            <span className="chip chip-info">{filtered.length} {tr("EVENTS")}</span>
-          }
-        >
-          {loading ? (
-            <Empty>{tr("Loading the ledger…")}</Empty>
-          ) : filtered.length ? (
-            filtered.slice(0, limit).map((r) => (
-              <button
-                className={`event-row ${selected?.id === r.id ? "selected" : ""}`}
-                key={r.id}
-                onClick={() => setSelected(r)}
-              >
-                <time>{new Date(r.createdAt).toLocaleTimeString()}</time>
-                <span
-                  className={`event-node ${isRejected(r) ? "bad" : ""}`}
-                >
-                  <VoxelCube
-                    size={16}
-                    tone={isRejected(r) ? "bad" : "ok"}
-                  />
-                </span>
-                <span>
-                  <b>{r.eventType}</b>
-                  <small>
-                    {r.actorType} · {r.subjectType} · {short(r.subjectId, 5)}
-                  </small>
-                </span>
-                <span className="chip chip-dim">
-                  {r.chainSignature ? "CHAIN" : "SERVER"}
-                </span>
-                <ArrowUpRight size={13} />
-              </button>
-            ))
-          ) : (
-            <Empty>{tr("No events match these filters.")}</Empty>
-          )}
-          {filtered.length > limit && (
-            <button
-              className="btn btn-ghost full-button"
-              onClick={() => setLimit((n) => n + 100)}
-            >{tr("Load more events")}</button>
-          )}
-        </Panel>
-        <Panel title={tr("Inspect the evidence")} meta={<Fingerprint size={17} />}>
-          {selected ? (
-            <>
-              <span className="chip chip-gold">{selected.eventType}</span>
-              <div className="metric-line">
-                <span>{tr("Recorded")}</span>
-                <b>{new Date(selected.createdAt).toLocaleString()}</b>
-              </div>
-              <div className="metric-line">
-                <span>{tr("Actor")}</span>
-                <b>{selected.actorType}</b>
-              </div>
-              <code className="hash-preview">{selected.subjectId}</code>
-              <pre className="payload-view">
-                {JSON.stringify(selected.payload, null, 2)}
-              </pre>
-              {selected.chainSignature && (
-                <a
-                  className="btn btn-gold full-button"
-                  target="_blank"
-                  rel="noreferrer"
-                  href={explorerTransactionUrl(selected.chainSignature)}
-                >
-                  {tr("Open on Solana Explorer")} <ArrowUpRight size={13} />
-                </a>
-              )}
-            </>
-          ) : (
-            <Empty>
-              <Fingerprint size={32} />
-              <p>{tr("Select an event to inspect its recorded payload and transaction signature.")}</p>
-            </Empty>
-          )}
-        </Panel>
-      </div>
-    </div>
-  );
-}
+export function ArtifactAudit() { return <ActivityPage />; }
 
 function LedgerBlocks() {
   const tr = useT(VI);

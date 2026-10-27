@@ -4,7 +4,7 @@ import { z } from "zod";
 import { getChain } from "../chain/index.js";
 import { nowSeconds } from "../clock.js";
 import { prisma } from "../db/client.js";
-import { audit } from "../db/audit.js";
+import { audit, recordAudit, publishAudit, type AuditInput } from "../db/audit.js";
 import { PolicySchema, canonicalPolicy, policyHash, toGrantLimits } from "../policy/canonical.js";
 import { deterministic } from "./risk.js";
 import { callerWallet, identityEnforced, requireWallet } from "../auth.js";
@@ -98,6 +98,18 @@ const CreateGrant = z.object({
   hireId: z.string().min(1).optional(),
 });
 
+async function registeredGrant(body: z.infer<typeof CreateGrant>, hash: string) {
+  if (!body.grantPda) return null;
+  const found = await prisma.agentGrant.findUnique({ where: { grantPda: body.grantPda }, include: { owner: true, policyVersion: true, vault: true } });
+  if (!found) return null;
+  if (found.owner.wallet !== body.ownerWallet) throw fail(403, "that grant is owned by a different wallet");
+  if (found.policyVersion.policyHash !== hash || found.agentVersionId !== body.agentVersionId ||
+      body.agentId && found.agentId !== body.agentId || body.vaultPda && body.vaultPda !== found.vault.vaultPda) {
+    throw fail(409, "the saved registration differs from this request; inspect the existing policy");
+  }
+  return found;
+}
+
 /**
  * Decide which hire, if any, authorises this grant.
  *
@@ -110,7 +122,7 @@ const CreateGrant = z.object({
  * The publisher running their own agent needs no rental, which is also the
  * path every self-published demo takes.
  */
-export async function resolveHire(agentVersionId: string, ownerWallet: string, hireId?: string): Promise<{ id: string; endsAt: Date } | null> {
+export async function resolveHire(agentVersionId: string, ownerWallet: string, hireId?: string, recordSignedHistory = false): Promise<{ id: string; endsAt: Date } | null> {
   const listing = await prisma.agentListing.findFirst({ where: { agentVersionId } });
   const forRent = Boolean(listing?.developerWallet) && (listing?.priceLamports ?? 0n) > 0n;
   if (!forRent || listing?.developerWallet === ownerWallet) return null;
@@ -125,7 +137,7 @@ export async function resolveHire(agentVersionId: string, ownerWallet: string, h
   if (hire.ownerWallet !== ownerWallet) {
     throw fail(403, "That rental belongs to another wallet");
   }
-  if (hire.endsAt <= new Date()) {
+  if (hire.endsAt <= new Date() && !recordSignedHistory) {
     throw fail(402, "That rental has ended — renew it before granting authority");
   }
   return { id: hire.id, endsAt: hire.endsAt };
@@ -147,7 +159,8 @@ export async function grantRoutes(app: FastifyInstance) {
     if (!agentVersion) return reply.code(404).send({ error: "agent version not found" });
     const hire = await resolveHire(agentVersion.id, body.ownerWallet, body.hireId);
     const requested = body.policy.durationHours;
-    const hoursLeft = hire ? Math.max(1, Math.floor((hire.endsAt.getTime() - Date.now()) / 3_600_000)) : null;
+    const hoursLeft = hire ? Math.floor((hire.endsAt.getTime() - Date.now()) / 3_600_000) : null;
+    if (hoursLeft !== null && hoursLeft < 1) return reply.code(402).send({ error: "Less than one hour remains on this rental. Renew it before creating a policy." });
     const floor = deterministic(body.policy);
     return json({
       ok: true,
@@ -157,6 +170,7 @@ export async function grantRoutes(app: FastifyInstance) {
       // rental. Null means no rental applies and the request stands.
       maxDurationHours: hoursLeft,
       durationHours: hoursLeft === null ? requested : Math.min(requested, hoursLeft),
+      expiresAt: Math.floor(Date.now() / 1000) + (hoursLeft === null ? requested : Math.min(requested, hoursLeft)) * 3600,
       risk: { decision: floor.decision, score: floor.score, acknowledgementRequired: floor.decision !== "ALLOW" },
       executor: getChain().executorPubkey,
     });
@@ -172,6 +186,8 @@ export async function grantRoutes(app: FastifyInstance) {
     const now = nowSeconds();
     const hash = policyHash(body.policy);
     const limits = toGrantLimits(body.policy, now);
+    const existing = await registeredGrant(body, hash);
+    if (existing) return reply.code(200).send(json({ grant: existing, policyHash: hash, chain: chain.kind }));
 
     // Validate everything that can be validated before any row is written, so
     // a bad request leaves nothing behind. An unknown agent version is the
@@ -182,8 +198,6 @@ export async function grantRoutes(app: FastifyInstance) {
     // If this agent is someone else's and offered for rent, a live rental has
     // to cover it. Checked before the on-chain read so the error the owner
     // sees names the actual problem.
-    const hire = await resolveHire(agentVersion.id, body.ownerWallet, body.hireId);
-
     // On Solana the browser signed create_grant itself and only tells us the
     // PDA. That claim is verified against the account the program stored:
     // without this, any signed-in wallet could register someone else's grant
@@ -197,6 +211,16 @@ export async function grantRoutes(app: FastifyInstance) {
       if (onchainAtCreate.executor !== chain.executorPubkey) return reply.code(400).send({ error: "that grant names a different executor than this API" });
       if (onchainAtCreate.policyHash && hex(onchainAtCreate.policyHash) !== hash) return reply.code(400).send({ error: "the policy you posted does not match the policy hash the grant was created with" });
       if (body.vaultPda && onchainAtCreate.vault && onchainAtCreate.vault !== body.vaultPda) return reply.code(400).send({ error: "vaultPda does not match the grant's vault" });
+      const same = (left: string[], right: string[]) => [...left].sort().join("|") === [...right].sort().join("|");
+      if (onchainAtCreate.spendCapUnits !== limits.spendCapUnits || onchainAtCreate.maxTransactions !== limits.maxTransactions ||
+          onchainAtCreate.cooldownSeconds !== limits.cooldownSeconds || !same(onchainAtCreate.allowedMints, limits.allowedMints) ||
+          !same(onchainAtCreate.allowedDestinations, limits.allowedDestinations)) return reply.code(400).send({ error: "the signed limits differ from the policy being registered" });
+    }
+    // A delayed sync records authority that already exists, even after its
+    // rental expires. It must still belong to this wallet and end within that rental.
+    const hire = await resolveHire(agentVersion.id, body.ownerWallet, body.hireId, Boolean(onchainAtCreate));
+    if (hire && onchainAtCreate && onchainAtCreate.expiresAt > Math.floor(hire.endsAt.getTime() / 1000)) {
+      return reply.code(400).send({ error: "the signed policy extends beyond its rental" });
     }
 
     const owner = await prisma.owner.upsert({ where: { wallet: body.ownerWallet }, update: {}, create: { wallet: body.ownerWallet } });
@@ -239,38 +263,44 @@ export async function grantRoutes(app: FastifyInstance) {
     // value wins when we have it.
     const expiresAt = new Date((onchainAtCreate?.expiresAt ?? limits.expiresAt) * 1000);
 
-    const grant = await prisma.agentGrant.create({
-      data: {
-        ownerId: owner.id, vaultId: vault.id, agentVersionId: agentVersion.id, policyVersionId: policy.id,
-        grantPda, agentId, executorPubkey: chain.executorPubkey, createSignature, hireId: hire?.id ?? null, expiresAt,
-      },
-    });
-    // The wallet signs create_grant before this call, so the grant already
-    // exists on-chain and refusing here would only orphan it. What the record
-    // can do is state the risk this policy carried and whether the owner
-    // acknowledged it — recomputed here, not taken from the browser, so a
-    // client that skips the prompt cannot also erase the verdict.
     const floor = deterministic(body.policy);
     const risk = {
-      deterministicDecision: floor.decision,
-      deterministicScore: floor.score,
-      findings: floor.findings,
-      acknowledged: body.riskAcknowledged === true,
+      deterministicDecision: floor.decision, deterministicScore: floor.score,
+      findings: floor.findings, acknowledged: body.riskAcknowledged === true,
       acknowledgementRequired: floor.decision !== "ALLOW",
     };
-    await audit({
-      actorType: "owner", actorId: body.ownerWallet, eventType: "grant.created", subjectType: "grant", subjectId: grant.id, chainSignature: createSignature,
-      payload: { grantId: grant.id, grantPda, agentId, policyHash: hash, agentHash: agentVersion.agentHash, limits, risk },
-    });
-    // An unacknowledged non-ALLOW policy is worth its own row: it is the case
-    // an auditor would want to find without reading every grant payload.
-    if (risk.acknowledgementRequired && !risk.acknowledged) {
-      await audit({
-        actorType: "system", actorId: "risk-engine", eventType: "grant.risk_unacknowledged", subjectType: "grant", subjectId: grant.id, chainSignature: createSignature,
-        payload: { grantId: grant.id, decision: floor.decision, score: floor.score, findings: floor.findings },
+    // Grant + evidence commit together. Replaying a confirmed browser operation
+    // returns the same row; a racing registration rolls back at the unique PDA.
+    try {
+      const result = await prisma.$transaction(async tx => {
+        const grant = await tx.agentGrant.create({ data: {
+          ownerId: owner.id, vaultId: vault.id, agentVersionId: agentVersion.id, policyVersionId: policy.id,
+          grantPda: grantPda!, agentId, executorPubkey: chain.executorPubkey, createSignature,
+          hireId: hire?.id ?? null, expiresAt,
+        } });
+        const input: AuditInput = {
+          actorType: "owner", actorId: body.ownerWallet, eventType: "grant.created",
+          subjectType: "grant", subjectId: grant.id, chainSignature: createSignature,
+          payload: { grantId: grant.id, grantPda, agentId, policyHash: hash, agentHash: agentVersion.agentHash, limits, risk },
+        };
+        const events = [{ row: await recordAudit(input, tx), input }];
+        if (risk.acknowledgementRequired && !risk.acknowledged) {
+          const warning: AuditInput = { actorType: "system", actorId: "risk-engine", eventType: "grant.risk_unacknowledged",
+            subjectType: "grant", subjectId: grant.id, chainSignature: createSignature,
+            payload: { grantId: grant.id, decision: floor.decision, score: floor.score, findings: floor.findings } };
+          events.push({ row: await recordAudit(warning, tx), input: warning });
+        }
+        return { grant, events };
       });
+      for (const event of result.events) publishAudit(event.row, event.input);
+      return reply.code(201).send(json({ grant: result.grant, policyHash: hash, chain: chain.kind }));
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+        const concurrent = await registeredGrant(body, hash);
+        if (concurrent) return reply.code(200).send(json({ grant: concurrent, policyHash: hash, chain: chain.kind }));
+      }
+      throw error;
     }
-    return reply.code(201).send(json({ grant, policyHash: hash, chain: chain.kind }));
   });
 
   // Your grants, not everyone's. The unscoped version was how the dashboard
@@ -281,7 +311,7 @@ export async function grantRoutes(app: FastifyInstance) {
     if (identityEnforced() && !caller) return json([]);
     const grants = await prisma.agentGrant.findMany({
       where: caller ? { owner: { wallet: caller } } : undefined,
-      include: { agentVersion: true, policyVersion: true, owner: true, hire: true },
+      include: { agentVersion: true, policyVersion: true, owner: true, hire: true, runs: { orderBy: { startedAt: "desc" }, take: 50 } },
       orderBy: { createdAt: "desc" },
     });
     return json(grants);

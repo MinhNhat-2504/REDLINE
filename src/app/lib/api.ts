@@ -50,6 +50,7 @@ export interface AgentVersion {
   // Absent on an older API build; `unclaimed` covers rows published before
   // publishing required a signature.
   publisherWallet?: string | null; isMine?: boolean; unclaimed?: boolean;
+  listings?: Listing[];
   rating?: AgentRating | null;
 }
 // On a grant that is not yours the API returns the allowlists as counts, not
@@ -73,6 +74,7 @@ export interface IntentRow {
   id: string; nonce: number; amountUnits: string; destination: string; reason: string; intentHash: string; createdAt: string;
   decision: null | { allow: boolean; reasonCode: string; stage: string; chainTx: null | { signature: string; result: string; error: string | null; slot: string | null } };
 }
+export interface AgentRun { id: string; grantId: string; mode: string; status: string; startedAt: string; endedAt?: string | null }
 export interface IntentPreview {
   verdict: { allow: boolean; reasonCode: string; gate: number; message: string };
   intentHash: string;
@@ -82,7 +84,7 @@ export interface IntentPreview {
 // `redacted` is set by the API when the caller is not the owner: identity and
 // linkage are masked server-side, the on-chain evidence is not. The UI says so
 // rather than presenting a masked row as if it were the whole record.
-export interface AuditRow { id: string; createdAt: string; actorType: string; eventType: string; subjectType: string; subjectId: string; chainSignature: string | null; payload: Record<string, unknown>; redacted?: boolean }
+export interface AuditRow { id: string; createdAt: string; actorType: string; actorId?: string; eventType: string; subjectType: string; subjectId: string; chainSignature: string | null; payload: Record<string, unknown>; redacted?: boolean }
 export interface VaultView { owner: string; vaultPda: string; vaultAta: string; mint: string; balanceUnits: string | null; exists: boolean }
 export interface FeedEvent { id: string; at: string; eventType: string; actorType: string; payload: Record<string, unknown>; chainSignature?: string | null }
 export interface Listing {
@@ -209,7 +211,7 @@ export async function checkHealth(attempts = 3, delayMs = 700, timeoutMs = 12_00
 }
 
 export const api = {
-  health: () => req<Health>("/health"),
+  health: () => req<Health>("/health", { signal: AbortSignal.timeout(12_000) }),
   policyPresets: () => req<{ version: number; presets: PolicyPreset[] }>("/policy/presets", { signal: AbortSignal.timeout(15_000) }, false),
   simulatePolicy: (input: SimulationInput) => req<SimulationResult>("/policy/simulate", { method: "POST", body: JSON.stringify(input), signal: AbortSignal.timeout(15_000) }, false),
   authNonce: (wallet: string) => req<{ nonce: string; message: string; expiresAt: string }>("/auth/nonce", { method: "POST", body: JSON.stringify({ wallet }) }),
@@ -218,8 +220,8 @@ export const api = {
   agent: (id: string) => req<AgentVersion & { listings: Listing[]; identityEnforced: boolean }>(`/agents/${id}`),
   publishAgent: (a: { name: string; version: string; strategy: string; modelRef: string; codeRef: string; config?: Record<string, unknown> }) =>
     req<{ agent: AgentVersion }>("/agents", { method: "POST", body: JSON.stringify(a) }),
-  grants: () => req<Grant[]>("/grants"),
-  grant: (id: string) => req<Grant>(`/grants/${id}`),
+  grants: () => req<Grant[]>("/grants", { signal: AbortSignal.timeout(12_000) }),
+  grant: (id: string) => req<Grant>(`/grants/${id}`, { signal: AbortSignal.timeout(12_000) }),
   createGrant: (b: {
     ownerWallet: string; vaultPda: string; agentVersionId: string; grantPda: string; createSignature: string; agentId: string;
     policy: { agentName: string; strategy: string; tokens: string[]; spendCapUsdc: number; maxTransactions: number; durationHours: number; cooldownMinutes: number; allowedMints: string[]; allowedDestinations: string[] };
@@ -229,13 +231,13 @@ export const api = {
     // The rental covering this grant, when the agent belongs to someone else.
     // The API re-checks it against the listing, the wallet and the end date.
     hireId?: string;
-  }) => req<{ grant: Grant; policyHash: string; chain: string }>("/grants", { method: "POST", body: JSON.stringify(b) }),
+  }) => req<{ grant: Grant; policyHash: string; chain: string }>("/grants", { method: "POST", body: JSON.stringify(b), signal: AbortSignal.timeout(20_000) }),
   // Same refusals as createGrant, answered before the wallet signs anything —
   // a 402 "rent it first" is only useful while create_grant is still unsigned.
   preflightGrant: (b: {
     ownerWallet: string; agentVersionId: string; hireId?: string;
     policy: { agentName: string; strategy: string; tokens: string[]; spendCapUsdc: number; maxTransactions: number; durationHours: number; cooldownMinutes: number; allowedMints: string[]; allowedDestinations: string[] };
-  }) => req<{ ok: boolean; hireId: string | null; hireEndsAt: string | null; maxDurationHours: number | null; durationHours: number; risk: { decision: string; score: number; acknowledgementRequired: boolean }; executor: string }>("/grants/preflight", { method: "POST", body: JSON.stringify(b) }),
+  }) => req<{ ok: boolean; hireId: string | null; hireEndsAt: string | null; maxDurationHours: number | null; durationHours: number; expiresAt?: number; risk: { decision: string; score: number; acknowledgementRequired: boolean }; executor: string }>("/grants/preflight", { method: "POST", body: JSON.stringify(b) }),
   revoke: (id: string, signature?: string) => req<{ ok: boolean; signature: string }>(`/grants/${id}/revoke`, { method: "POST", body: JSON.stringify({ signature }) }),
   intents: (grantId: string) => req<IntentRow[]>(`/grants/${grantId}/intents`),
   previewIntent: (b: { grantId: string; mint: string; amountUnits: string; destination: string; reason?: string; nonce?: number }) =>
@@ -245,12 +247,14 @@ export const api = {
   submitIntent: (b: { grantId: string; mint: string; amountUnits: string; destination: string; reason?: string; nonce?: number; proveOnChain?: boolean }) =>
     req<{ intentId: string; precheck: { reasonCode: string; message: string }; submitted: boolean; signature?: string; onchainSuccess?: boolean; onchainReason?: string }>("/intents", { method: "POST", body: JSON.stringify(b) }),
   startRun: (grantId: string, mode: "scripted" | "llm" = "scripted") => req<{ id: string }>("/runs", { method: "POST", body: JSON.stringify({ grantId, mode }) }),
+  runs: () => req<{ active: string[]; runs: AgentRun[] }>("/runs", { signal: AbortSignal.timeout(12_000) }),
   // Fastify rejects a JSON content-type with an empty body (400), and req()
   // always sends that header — so a bodyless POST needs an explicit `{}`.
   stopRun: (runId: string) => req<{ ok: boolean }>(`/runs/${runId}/stop`, { method: "POST", body: "{}" }),
+  recentAudit: (authenticated: boolean) => req<AuditRow[]>("/audit?order=latest&limit=1000", { signal: AbortSignal.timeout(12_000) }, authenticated),
   audit: (grantId?: string) => req<AuditRow[]>(`/audit${grantId ? `?grant=${grantId}` : ""}`),
-  vault: (owner: string) => req<VaultView>(`/vaults/${owner}`),
-  fundVault: (ownerWallet: string) => req<{ vaultPda: string; vaultAta: string; signature: string; balance: string }>("/devnet/fund", { method: "POST", body: JSON.stringify({ ownerWallet }) }),
+  vault: (owner: string) => req<VaultView>(`/vaults/${owner}`, { signal: AbortSignal.timeout(12_000) }),
+  fundVault: (ownerWallet: string) => req<{ vaultPda: string; vaultAta: string; signature: string; balance: string }>("/devnet/fund", { method: "POST", body: JSON.stringify({ ownerWallet }), signal: AbortSignal.timeout(20_000) }),
   listings: () => req<Listing[]>("/listings"),
   setListingPrice: (id: string, b: { developerWallet: string; priceLamports: string }) =>
     req<Listing>(`/listings/${id}`, { method: "PATCH", body: JSON.stringify(b) }),

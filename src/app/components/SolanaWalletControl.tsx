@@ -12,8 +12,8 @@ import { useClient, useRequest } from "@solana/react";
 import { ChevronDown, KeyRound, LoaderCircle, LogOut, PlugZap, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import type { AppClient } from "../solana/client";
-import { loadSession } from "../lib/api";
-import { sessionFor, signIn, signOut } from "../lib/signin";
+import { signIn, signOut } from "../lib/signin";
+import { useSignedIn } from "../lib/useSignedIn";
 import { color } from "../theme";
 import { CopyChip } from "./CopyChip";
 import { useT } from "../i18n/LanguageContext";
@@ -44,7 +44,7 @@ const VI: Record<string, string> = {
   "Disconnected": "Đã ngắt kết nối",
 
   "Connecting": "Đang kết nối",
-  "Connect Solana": "Connect Solana",
+  "Connect Solana": "Kết nối ví",
   "Solana Wallet Standard · Devnet": "Solana Wallet Standard · Devnet",
   "No compatible wallet detected. Install Phantom, Solflare, or another Wallet Standard wallet.":
     "Không tìm thấy ví tương thích. Hãy cài Phantom, Solflare, hoặc một ví khác hỗ trợ Wallet Standard.",
@@ -79,7 +79,7 @@ export function SolanaWalletControl() {
   const [open, setOpen] = useState(false);
   // Mirrors the stored session so the button re-renders when it changes;
   // localStorage on its own does not notify React.
-  const [sessionWallet, setSessionWallet] = useState<string | null>(() => loadSession()?.wallet ?? null);
+  const signedIn = useSignedIn(connected ? String(connected.account.address) : null);
   const [signingIn, setSigningIn] = useState(false);
   const [signinError, setSigninError] = useState("");
 
@@ -100,7 +100,6 @@ export function SolanaWalletControl() {
   if (connected) {
     const owner = String(connected.account.address);
     const short = `${owner.slice(0, 4)}…${owner.slice(-4)}`;
-    const signedIn = !!sessionFor(owner) && sessionWallet === owner;
     return (
       <div className="relative flex items-center gap-2 whitespace-nowrap shrink-0">
         <WalletBalance owner={owner} />
@@ -111,8 +110,7 @@ export function SolanaWalletControl() {
               setSigninError("");
               setSigningIn(true);
               try {
-                const s = await signIn(m => signMessage.dispatchAsync(m), owner);
-                setSessionWallet(s.wallet);
+                await signIn(m => signMessage.dispatchAsync(m), owner);
                 toast.success(tr("Signed in"), { description: `${tr("Verified as")} ${short}` });
               } catch (e) {
                 const message = e instanceof Error ? e.message : tr("Sign-in was rejected.");
@@ -123,7 +121,7 @@ export function SolanaWalletControl() {
               }
             }}
             disabled={signingIn}
-            className="hidden sm:inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-all disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-all disabled:opacity-60"
             style={{ background: "#38bdf814", border: "1px solid #38bdf845", color: color.info, whiteSpace: "nowrap", flexShrink: 0, lineHeight: 1 }}
             title={tr("Prove you hold this wallet. Signs a message only — no transfer, no funds moved.")}
           >
@@ -133,23 +131,24 @@ export function SolanaWalletControl() {
         )}
         {signinError && <span role="alert" className="hidden lg:inline text-[12px] whitespace-nowrap shrink-0" style={{ color: color.danger }}>{signinError}</span>}
         <div
-          className="flex items-center gap-1.5 h-8 pl-3 pr-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0"
+          className="wallet-identity flex items-center gap-1.5 h-8 pl-3 pr-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0"
           style={{ background: `${ACCENT}0e`, border: `1px solid ${ACCENT}35`, color: ACCENT, whiteSpace: "nowrap", flexShrink: 0 }}
         >
           <Wallet size={13} className="shrink-0" />
-          <CopyChip
+          <span className="wallet-address"><CopyChip
             value={owner}
             label={short}
             title={tr("Copy full wallet address")}
             toastLabel={short}
-          />
+          /></span>
           {signedIn && <KeyRound size={11} className="shrink-0" style={{ color: color.info }} />}
           <span className="w-1.5 h-1.5 rounded-full glow-pulse-dot shrink-0" style={{ background: ACCENT }} />
           <button
             type="button"
-            onClick={() => { signOut(); setSessionWallet(null); disconnect.dispatch(); toast(tr("Disconnected"), { description: short }); }}
+            onClick={() => { signOut(); disconnect.dispatch(); toast(tr("Disconnected"), { description: short }); }}
             className="p-1 rounded-md transition-colors hover:bg-black/[0.06] shrink-0"
             title={tr("Disconnect Solana wallet")}
+            aria-label={tr("Disconnect Solana wallet")}
           >
             <LogOut size={12} />
           </button>
@@ -166,6 +165,8 @@ export function SolanaWalletControl() {
         type="button"
         onClick={() => setOpen(value => !value)}
         disabled={pending}
+        aria-expanded={open}
+        aria-haspopup="true"
         className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all disabled:opacity-60 hover:shadow-[0_0_22px_rgba(37,99,235,.28)]${!pending && !open ? " glow-pulse-ring" : ""}`}
         style={{ background: color.surfaceSubtle, border: `1px solid ${color.border}`, color: color.textSecondary }}
       >

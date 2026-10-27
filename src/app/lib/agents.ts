@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { api, grantExpiresAt, type AgentRating, type AgentVersion, type Grant } from "./api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { api, grantExpiresAt, type AgentRating, type AgentVersion, type Grant, type Listing } from "./api";
 
 // Real per-agent rollups computed from /agents + /grants. No win rate, APY or
 // uptime here — the platform never tracked those, so there is nothing honest
@@ -25,6 +25,7 @@ export interface AgentSummary {
   isMine: boolean;
   unclaimed: boolean;
   rating: AgentRating | null;
+  listings?: Listing[];
 }
 
 export function summarizeAgents(agents: AgentVersion[], grants: Grant[]): AgentSummary[] {
@@ -44,6 +45,7 @@ export function summarizeAgents(agents: AgentVersion[], grants: Grant[]): AgentS
       isMine: a.isMine ?? false,
       unclaimed: a.unclaimed ?? a.publisherWallet == null,
       rating: a.rating ?? null,
+      listings: a.listings,
       // An agent whose grants have all lapsed (expired, not revoked) is idle,
       // not revoked — the two words mean different things to the owner.
       status: own.length === 0 ? "IDLE" : active.length > 0 ? "ACTIVE" : own.every(g => g.revoked) ? "REVOKED" : "IDLE",
@@ -54,24 +56,31 @@ export function summarizeAgents(agents: AgentVersion[], grants: Grant[]): AgentS
   });
 }
 
-export function useRealAgents() {
+export function useRealAgents(owner?: string) {
+  const currentOwner = useRef(owner); currentOwner.current = owner;
+  const sequence = useRef(0);
+  const [dataOwner, setDataOwner] = useState(owner);
   const [agents, setAgents] = useState<AgentVersion[]>([]);
   const [grants, setGrants] = useState<Grant[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
+    const request = ++sequence.current;
     try {
       const [a, g] = await Promise.all([api.agents(), api.grants()]);
-      setAgents(a); setGrants(g); setError("");
+      if (currentOwner.current !== owner || request !== sequence.current) return;
+      setDataOwner(owner); setAgents(a); setGrants(owner === undefined ? g : g.filter(grant => grant.owner.wallet === owner)); setError("");
     } catch (e) {
+      if (currentOwner.current !== owner || request !== sequence.current) return;
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoading(false);
+      if (currentOwner.current === owner && request === sequence.current) setLoading(false);
     }
-  }, []);
+  }, [owner]);
 
-  useEffect(() => { void load(); const t = setInterval(() => void load(), 15_000); return () => clearInterval(t); }, [load]);
+  useEffect(() => { setAgents([]); setGrants([]); setLoading(true); void load(); const t = setInterval(() => void load(), 15_000); return () => { ++sequence.current; clearInterval(t); }; }, [load]);
 
-  return { agents: summarizeAgents(agents, grants), grants, loading, error, reload: load };
+  const visibleGrants = dataOwner === owner ? grants : [];
+  return { agents: summarizeAgents(agents.map(a => owner === undefined ? a : { ...a, isMine: Boolean(owner && a.publisherWallet === owner) }), visibleGrants), grants: visibleGrants, loading, error, reload: load };
 }

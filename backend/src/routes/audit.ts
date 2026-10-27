@@ -4,6 +4,7 @@ import { feed, type FeedEvent } from "../feed.js";
 import { callerWallet, identityEnforced } from "../auth.js";
 import { redactAuditRow, redactFeedEvent } from "../redact.js";
 import { json } from "./json.js";
+import { auditHistory } from "../db/audit-history.js";
 
 const ANON_LIMIT = 50;
 
@@ -26,19 +27,22 @@ export async function auditRoutes(app: FastifyInstance) {
   // type, the reason code, the amount and the on-chain signature. They lose
   // the part that only helps someone building a map of who runs what.
   app.get("/audit", async (req) => {
-    const { grant, limit } = req.query as { grant?: string; limit?: string };
+    const { grant, limit, order } = req.query as { grant?: string; limit?: string; order?: string };
+    const parsedLimit = Number(limit ?? 200);
+    const requestedTake = Number.isFinite(parsedLimit) ? Math.max(1, Math.min(Math.floor(parsedLimit), 1000)) : 200;
+    const direction = order === "latest" ? "desc" as const : "asc" as const;
     const caller = callerWallet(req);
     const enforced = identityEnforced();
 
     // Open/mock deployments keep the old unscoped behaviour so scripts/demo.sh
     // and the local six-beat run still print a full trail.
     if (!enforced) {
-      const take = Math.min(Number(limit ?? 200), 1000);
+      const take = requestedTake;
       const where = grant
         ? { OR: [{ subjectType: "grant", subjectId: grant }, { payload: { contains: `"grantId":"${grant}"` } }] }
         : {};
-      const rows = await prisma.auditEvent.findMany({ where, orderBy: { createdAt: "asc" }, take });
-      return json(rows.map(r => ({ ...r, payload: JSON.parse(r.payload) })));
+      const rows = await prisma.auditEvent.findMany({ where, orderBy: { createdAt: direction }, take });
+      return json(order === "latest" ? await auditHistory(rows) : rows.map(r => ({ ...r, payload: JSON.parse(r.payload) })));
     }
 
     if (!caller) {
@@ -55,12 +59,12 @@ export async function auditRoutes(app: FastifyInstance) {
       // a stranger gets, rather than a 403 that would confirm it exists.
       const rows = await prisma.auditEvent.findMany({
         where: { OR: [{ subjectType: "grant", subjectId: grant }, { payload: { contains: `"grantId":"${grant}"` } }] },
-        orderBy: { createdAt: "asc" }, take: ANON_LIMIT,
+        orderBy: { createdAt: direction }, take: ANON_LIMIT,
       });
       return json(rows.map(r => redactAuditRow({ ...r, payload: JSON.parse(r.payload) })));
     }
 
-    const take = Math.min(Number(limit ?? 200), 1000);
+    const take = requestedTake;
     const scope = grant ? [grant] : owned;
     const rows = scope.length
       ? await prisma.auditEvent.findMany({
@@ -74,10 +78,10 @@ export async function auditRoutes(app: FastifyInstance) {
               ...(grant ? [] : [{ actorId: caller }]),
             ],
           },
-          orderBy: { createdAt: "asc" }, take,
+          orderBy: { createdAt: direction }, take,
         })
-      : await prisma.auditEvent.findMany({ where: { actorId: caller }, orderBy: { createdAt: "asc" }, take });
-    return json(rows.map(r => ({ ...r, payload: JSON.parse(r.payload) })));
+      : await prisma.auditEvent.findMany({ where: { actorId: caller }, orderBy: { createdAt: direction }, take });
+    return json(order === "latest" ? await auditHistory(rows) : rows.map(r => ({ ...r, payload: JSON.parse(r.payload) })));
   });
 
   // Server-sent events. `*` streams every grant.

@@ -26,7 +26,7 @@ function readStoredLang(): Lang {
   } catch {
     // Private browsing / storage disabled — fall back to the default below.
   }
-  return "en";
+  return typeof navigator !== "undefined" && navigator.language.toLowerCase().startsWith("vi") ? "vi" : "en";
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {

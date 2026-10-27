@@ -16,6 +16,8 @@ const world = vi.hoisted(() => ({
   sessions: new Map<string, { wallet: string; expiresAt: Date }>(),
   onchain: new Map<string, Record<string, unknown>>(),
   created: [] as Record<string, unknown>[],
+  events: [] as Record<string, unknown>[],
+  failAudit: false,
   policyHashHex: "",
   listing: null as Record<string, unknown> | null,
   hire: null as Record<string, unknown> | null,
@@ -31,8 +33,8 @@ vi.mock("../src/chain/index.js", () => ({
   }),
 }));
 
-vi.mock("../src/db/client.js", () => ({
-  prisma: {
+vi.mock("../src/db/client.js", () => {
+  const db = {
     session: { findUnique: vi.fn(async ({ where }: { where: { tokenHash: string } }) => world.sessions.get(where.tokenHash) ?? null) },
     authNonce: { create: vi.fn(), findUnique: vi.fn(async () => null), update: vi.fn() },
     agentVersion: { findUnique: vi.fn(async ({ where }: { where: { id: string } }) => (where.id === "a1" ? { id: "a1", agentHash: "hash-a1", publisherWallet: ALICE } : null)) },
@@ -42,11 +44,20 @@ vi.mock("../src/db/client.js", () => ({
     vault: { upsert: vi.fn(async ({ create }: { create: { vaultPda: string } }) => ({ id: "vault-1", vaultPda: create.vaultPda })) },
     policyVersion: { upsert: vi.fn(async ({ create }: { create: Record<string, unknown> }) => ({ id: "policy-1", ...create })) },
     agentGrant: {
-      create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => { const row = { id: `grant-${world.created.length + 1}`, createdAt: new Date(), ...data }; world.created.push(row); return row; }),
+      findUnique: vi.fn(async ({ where }: { where: { grantPda?: string } }) => world.created.find(row => row.grantPda === where.grantPda) ?? null),
+      create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => { if (world.created.some(row => row.grantPda === data.grantPda)) throw Object.assign(new Error("duplicate PDA"), { code: "P2002" }); const row = { id: `grant-${world.created.length + 1}`, createdAt: new Date(), ...data, owner: { wallet: ALICE }, policyVersion: { policyHash: world.policyHashHex }, vault: { vaultPda: "VaultAlice" } }; world.created.push(row); return row; }),
     },
-    auditEvent: { create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: "evt", createdAt: new Date(), ...data })) },
-  },
-}));
+    auditEvent: { create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => { if (world.failAudit) throw new Error("audit unavailable"); const row = { id: `evt-${world.events.length}`, createdAt: new Date(), ...data }; world.events.push(row); return row; }) },
+  };
+  let tail: Promise<unknown> = Promise.resolve();
+  return { prisma: { ...db, $transaction: (work: (tx: typeof db) => Promise<unknown>) => {
+    const operation = tail.then(async () => {
+      const grants = world.created.length, events = world.events.length;
+      try { return await work(db); } catch (error) { world.created.splice(grants); world.events.splice(events); throw error; }
+    });
+    tail = operation.catch(() => {}); return operation;
+  } } };
+});
 
 async function build() {
   process.env.REDLINE_API_KEY = "deployed-secret";
@@ -78,7 +89,7 @@ const policy = {
 };
 
 beforeEach(async () => {
-  world.sessions.clear(); world.onchain.clear(); world.created.length = 0; world.listing = null; world.hire = null;
+  world.sessions.clear(); world.onchain.clear(); world.created.length = 0; world.events.length = 0; world.failAudit = false; world.listing = null; world.hire = null;
   const { policyHash } = await import("../src/policy/canonical.js");
   world.policyHashHex = policyHash(policy);
   const nowSec = Math.floor(Date.now() / 1000);
@@ -95,6 +106,62 @@ afterEach(() => { delete process.env.REDLINE_API_KEY; vi.clearAllMocks(); });
 const body = (ownerWallet: string) => ({ ownerWallet, agentVersionId: "a1", grantPda: ALICE_GRANT, createSignature: "sig", agentId: "0".repeat(32), policy });
 
 describe("registering a browser-signed grant on Solana", () => {
+  it("records a previously signed policy within its rental even when syncing after the rental ends", async () => {
+    const end = Date.now() - 60_000;
+    world.listing = { id: "l1", developerWallet: MALLORY, priceLamports: 1n };
+    world.hire = { id: "h1", listingId: "l1", ownerWallet: ALICE, endsAt: new Date(end) };
+    world.onchain.get(ALICE_GRANT)!.expiresAt = Math.floor(end / 1000) - 10;
+    const app = await build();
+    const reply = await app.inject({ method: "POST", url: "/grants", headers: await signedIn(ALICE), payload: { ...body(ALICE), hireId: "h1" } });
+    expect(reply.statusCode).toBe(201);
+    await app.close();
+  });
+  it("does not register a hash claim that disagrees with the actual on-chain limits", async () => {
+    world.onchain.get(ALICE_GRANT)!.spendCapUnits = 999_000_000n;
+    const app = await build();
+    const reply = await app.inject({ method: "POST", url: "/grants", headers: await signedIn(ALICE), payload: body(ALICE) });
+    expect(reply.statusCode).toBe(400); expect(world.created).toHaveLength(0);
+    await app.close();
+  });
+  it("replays a registration without another row or audit event, even after its rental ends", async () => {
+    const app = await build(), headers = await signedIn(ALICE);
+    const first = await app.inject({ method: "POST", url: "/grants", headers, payload: body(ALICE) });
+    world.listing = { id: "paid", developerWallet: MALLORY, priceLamports: 100n };
+    const retry = await app.inject({ method: "POST", url: "/grants", headers, payload: body(ALICE) });
+    expect(first.statusCode).toBe(201); expect(retry.statusCode).toBe(200);
+    expect(retry.json().grant.id).toBe(first.json().grant.id);
+    expect(world.created).toHaveLength(1); expect(world.events).toHaveLength(1);
+    await app.close();
+  });
+
+  it("rejects a replay with changed authority", async () => {
+    const app = await build(), headers = await signedIn(ALICE);
+    await app.inject({ method: "POST", url: "/grants", headers, payload: body(ALICE) });
+    const changed = { ...body(ALICE), policy: { ...policy, spendCapUsdc: 300 } };
+    const retry = await app.inject({ method: "POST", url: "/grants", headers, payload: changed });
+    expect(retry.statusCode).toBe(409); expect(world.created).toHaveLength(1);
+    await app.close();
+  });
+
+  it("rolls back a registration when evidence cannot be stored", async () => {
+    const app = await build(), headers = await signedIn(ALICE);
+    world.failAudit = true;
+    const failed = await app.inject({ method: "POST", url: "/grants", headers, payload: body(ALICE) });
+    expect(failed.statusCode).toBe(500); expect(world.created).toHaveLength(0);
+    world.failAudit = false;
+    const retry = await app.inject({ method: "POST", url: "/grants", headers, payload: body(ALICE) });
+    expect(retry.statusCode).toBe(201); expect(world.events).toHaveLength(1);
+    await app.close();
+  });
+
+  it("converges two concurrent registrations to one policy and one evidence event", async () => {
+    const app = await build(), headers = await signedIn(ALICE);
+    const replies = await Promise.all([1, 2].map(() => app.inject({ method: "POST", url: "/grants", headers, payload: body(ALICE) })));
+    expect(replies.map(r => r.statusCode).sort()).toEqual([200, 201]);
+    expect(replies[0].json().grant.id).toBe(replies[1].json().grant.id);
+    expect(world.created).toHaveLength(1); expect(world.events).toHaveLength(1);
+    await app.close();
+  });
   it("refuses to register a grant the program says belongs to another wallet", async () => {
     const app = await build();
     const res = await app.inject({ method: "POST", url: "/grants", headers: await signedIn(MALLORY), payload: body(MALLORY) });
@@ -143,6 +210,14 @@ describe("registering a browser-signed grant on Solana", () => {
 describe("preflight: what POST /grants would refuse, before the wallet signs", () => {
   const PUBLISHER = "tGUK8mNoELfqns5irtov8t29YLf5fUiJdszPwAEezeM";
   const preflightBody = (ownerWallet: string, extra: Record<string, unknown> = {}) => ({ ownerWallet, agentVersionId: "a1", policy, ...extra });
+  it("does not extend a rental with less than one hour left", async () => {
+    world.listing = { id: "l1", developerWallet: PUBLISHER, priceLamports: 1n };
+    world.hire = { id: "h1", listingId: "l1", ownerWallet: ALICE, endsAt: new Date(Date.now() + 30 * 60_000) };
+    const app = await build();
+    const reply = await app.inject({ method: "POST", url: "/grants/preflight", headers: await signedIn(ALICE), payload: preflightBody(ALICE, { hireId: "h1" }) });
+    expect(reply.statusCode).toBe(402);
+    await app.close();
+  });
 
   it("says 402 while create_grant is still unsigned when the agent must be rented first", async () => {
     world.listing = { id: "l1", agentVersionId: "a1", developerWallet: PUBLISHER, priceLamports: 50_000_000n };

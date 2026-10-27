@@ -1,10 +1,10 @@
 import {
   Activity,
-  ArrowLeft,
   ArrowRight,
   BookOpen,
   Bot,
   Cpu,
+  ChevronDown,
   Globe,
   Layers,
   Menu,
@@ -15,37 +15,45 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import {
-  CopilotPage,
-  ModelsPage,
-  ProfilePage,
-} from "./components/ArtifactPages";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { BackendStatusBanner } from "./components/BackendStatus";
-import { DemoGuide } from "./components/DemoGuide";
 import { CommandPalette } from "./components/CommandPalette";
-import { VoxelCube } from "./components/depth";
-import { GuidePage } from "./components/GuidePage";
+import { OverviewPage } from "./components/OverviewPage";
 import { SolanaWalletControl } from "./components/SolanaWalletControl";
-import { SoundControl } from "./components/SoundControl";
 import { LanguageToggle } from "./components/LanguageToggle";
-import { useT } from "./i18n/LanguageContext";
-import {
-  ArtifactAgents,
-  ArtifactAnalytics,
-  ArtifactAudit,
-  ArtifactProtocol,
-} from "./frontend/Pages";
+import { Notifications } from "./components/Notifications";
+import { useLang, useT } from "./i18n/LanguageContext";
 import { applyPreference, readPreference } from "./frontend/preferences";
 import { playSound } from "./lib/soundscape";
-import {
-  MarketplacePage,
-  SessionsPage,
-  SettingsPage,
-  VaultPage,
-} from "./OperationalPages";
+const CopilotPage = lazy(() => import("./components/ArtifactPages").then(m => ({ default: m.CopilotPage })));
+const ModelsPage = lazy(() => import("./components/ArtifactPages").then(m => ({ default: m.ModelsPage })));
+const ProfilePage = lazy(() => import("./components/ArtifactPages").then(m => ({ default: m.ProfilePage })));
+const GuidePage = lazy(() => import("./components/GuidePage").then(m => ({ default: m.GuidePage })));
+const ArtifactAgents = lazy(() => import("./frontend/Pages").then(m => ({ default: m.ArtifactAgents })));
+const ArtifactAnalytics = lazy(() => import("./frontend/Pages").then(m => ({ default: m.ArtifactAnalytics })));
+const ArtifactAudit = lazy(() => import("./frontend/Pages").then(m => ({ default: m.ArtifactAudit })));
+const ArtifactProtocol = lazy(() => import("./frontend/Pages").then(m => ({ default: m.ArtifactProtocol })));
+const MarketplacePage = lazy(() => import("./OperationalPages").then(m => ({ default: m.MarketplacePage })));
+const SessionsPage = lazy(() => import("./OperationalPages").then(m => ({ default: m.SessionsPage })));
+const SettingsPage = lazy(() => import("./OperationalPages").then(m => ({ default: m.SettingsPage })));
+const VaultPage = lazy(() => import("./OperationalPages").then(m => ({ default: m.VaultPage })));
 
 const VI: Record<string, string> = {
+  "Overview": "Tổng quan",
+  "Spending limits": "Hạn mức chi",
+  "Vault": "Quỹ",
+  "Activity": "Hoạt động",
+  "More": "Thêm",
+  "More tools": "Công cụ khác",
+  "Help": "Hướng dẫn",
+  "About REDLINE": "Về REDLINE",
+  "Loading page…": "Đang tải trang…",
+  "Choose an agent, see its activity, or publish a version when you need to.": "Chọn agent, xem hoạt động hoặc xuất bản phiên bản khi cần.",
+  "Skip to content": "Đến nội dung chính",
+  "Manage your agents in a few simple steps.": "Quản lý agent qua vài bước đơn giản.",
+  "Choose an agent and set how much it can spend, who it can pay, and when access ends.": "Chọn agent, đặt số tiền được chi, người được nhận và thời điểm hết quyền truy cập.",
+  "Add test funds, check your balance, or withdraw to your wallet.": "Nạp tiền thử nghiệm, xem số dư hoặc rút về ví của bạn.",
+  "See what happened and open the transaction details when you need them.": "Xem những gì đã diễn ra và mở chi tiết giao dịch khi cần.",
   "Protocol": "Protocol",
   "Marketplace": "Marketplace",
   "Agents": "Agents",
@@ -91,11 +99,11 @@ const VI: Record<string, string> = {
 const routes = [
   {
     slug: "protocol",
-    label: "Protocol",
-    title: "Protocol",
+    label: "Overview",
+    title: "Overview",
     icon: ShieldCheck,
-    description: "The agent proposes. The chain decides.",
-    page: ArtifactProtocol,
+    description: "Manage your agents in a few simple steps.",
+    page: OverviewPage,
   },
   {
     slug: "marketplace",
@@ -108,38 +116,38 @@ const routes = [
   },
   {
     slug: "agents",
-    label: "Agents",
+    label: "My Agents",
     title: "My Agents",
     icon: Bot,
     description:
-      "Each version is pinned by an agentHash — SHA-256 of model, code and configuration — so a grant can only ever bind to one exact build.",
+      "Choose an agent, see its activity, or publish a version when you need to.",
     page: ArtifactAgents,
   },
   {
     slug: "guardrails",
-    label: "Guardrails",
-    title: "Guardrails",
+    label: "Spending limits",
+    title: "Spending limits",
     icon: Layers,
     description:
-      "Sign a boundary, then watch the agent operate inside it. Seven gates enforce every proposal in one transaction.",
+      "Choose an agent and set how much it can spend, who it can pay, and when access ends.",
     page: SessionsPage,
   },
   {
     slug: "treasury",
-    label: "Treasury",
-    title: "Treasury",
+    label: "Vault",
+    title: "Vault",
     icon: Wallet,
     description:
-      "Your program-owned vault. Refill on devnet, inspect reserves, withdraw as the owner.",
+      "Add test funds, check your balance, or withdraw to your wallet.",
     page: VaultPage,
   },
   {
     slug: "audit",
-    label: "Audit",
-    title: "Audit trail",
+    label: "Activity",
+    title: "Activity",
     icon: BookOpen,
     description:
-      "Every intent, decision and signature — decoded from the program and connected to its evidence.",
+      "See what happened and open the transaction details when you need them.",
     page: ArtifactAudit,
   },
   {
@@ -195,8 +203,17 @@ const routes = [
     description: "A practical guide to REDLINE.",
     page: GuidePage,
   },
+  {
+    slug: "about",
+    label: "About REDLINE",
+    title: "About REDLINE",
+    icon: ShieldCheck,
+    description: "The agent proposes. The chain decides.",
+    page: ArtifactProtocol,
+  },
 ];
-const headerOrder = [0, 1, 2, 3, 4, 5, 6, 8, 9, 7];
+const headerOrder = [0, 2, 4, 5];
+const moreOrder = [3, 1, 6, 8, 9, 10, 7, 12];
 const oldRouteOrder = [
   "protocol",
   "agents",
@@ -211,24 +228,29 @@ const oldRouteOrder = [
   "models",
   "profile",
 ];
-const readRoute = () =>
-  routes.find((r) => r.slug === location.hash.replace(/^#\/?/, "")) ??
-  routes[0];
+const readRoute = () => {
+  const [slug, query = ""] = location.hash.replace(/^#\/?/, "").split("?");
+  return { ...(routes.find(r => r.slug === slug) ?? routes[0]), query };
+};
 
 export default function App() {
   const tr = useT(VI);
+  const { lang } = useLang();
   const [route, setRoute] = useState(readRoute);
   const [menu, setMenu] = useState(false);
   const [search, setSearch] = useState(false);
+  const more = useRef<HTMLDetailsElement>(null);
   const main = useRef<HTMLElement>(null);
   const navigate = (slug: string) => {
     location.hash = `/${slug}`;
     setMenu(false);
+    if (more.current) more.current.open = false;
   };
   useEffect(() => {
     const change = () => {
       setRoute(readRoute());
       setMenu(false);
+      if (more.current) more.current.open = false;
       playSound("navigate");
     };
     window.addEventListener("hashchange", change);
@@ -239,9 +261,16 @@ export default function App() {
     applyPreference("motion", readPreference("motion"));
   }, []);
   useEffect(() => {
-    document.title = `${route.title} · REDLINE`;
+    document.title = `${tr(route.title)} · REDLINE`;
     main.current?.scrollTo({ top: 0 });
-  }, [route]);
+  }, [route, lang]);
+  useEffect(() => {
+    const close = (event: PointerEvent) => {
+      if (more.current && !more.current.contains(event.target as Node)) more.current.open = false;
+    };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, []);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
@@ -251,6 +280,7 @@ export default function App() {
       if (e.key === "Escape") {
         setMenu(false);
         setSearch(false);
+        if (more.current) more.current.open = false;
       }
     };
     window.addEventListener("keydown", key);
@@ -266,12 +296,16 @@ export default function App() {
     onSelect: () => navigate(r.slug),
   }));
   return (
-    <div className="app redline-artifact" data-route={route.slug}>
+    <div className="app redline-artifact simple-ui" data-route={route.slug}>
+      <a className="skip-link" href="#main-content" onClick={event => {
+        event.preventDefault();
+        main.current?.focus();
+      }}>{tr("Skip to content")}</a>
       <header className="hdr">
         <button
           className="brand"
           onClick={() => navigate("protocol")}
-          aria-label={tr("Open Protocol")}
+          aria-label={tr("Overview")}
         >
           <span className="emblem">
             <ShieldCheck size={16} />
@@ -283,6 +317,7 @@ export default function App() {
           onClick={() => setMenu((v) => !v)}
           aria-label={tr("Open navigation")}
           aria-expanded={menu}
+          aria-controls="mobile-navigation"
         >
           {menu ? <X size={16} /> : <Menu size={16} />}
         </button>
@@ -293,9 +328,18 @@ export default function App() {
               aria-current={route.slug === routes[i].slug ? "page" : undefined}
               onClick={() => navigate(routes[i].slug)}
             >
-              {tr(routes[i].label)}
+              <span>{tr(routes[i].label)}</span>
             </button>
           ))}
+          <details className="nav-more" ref={more}>
+            <summary aria-current={moreOrder.includes(index) ? "page" : undefined}>{tr("More")} <ChevronDown size={14} /></summary>
+            <div className="nav-more-list" aria-label={tr("More tools")}>
+              {moreOrder.map(i => {
+                const item = routes[i];
+                return <button key={item.slug} aria-current={route.slug === item.slug ? "page" : undefined} onClick={() => navigate(item.slug)}><item.icon size={16} />{tr(item.label)}</button>;
+              })}
+            </div>
+          </details>
         </nav>
         <div className="tools">
           <button
@@ -307,8 +351,8 @@ export default function App() {
             <span>{tr("Find")}</span>
             <kbd>⌘K</kbd>
           </button>
-          <SoundControl />
           <LanguageToggle />
+          <Notifications />
           <span className="netpill">
             <i />
             DEVNET
@@ -316,17 +360,10 @@ export default function App() {
           <div className="wallet-slot">
             <SolanaWalletControl />
           </div>
-          <button
-            className="avatar-btn"
-            onClick={() => navigate("profile")}
-            aria-label={tr("Open owner profile")}
-          >
-            <VoxelCube size={16} />
-          </button>
         </div>
         {menu && (
-          <nav className="mobile-navigation" aria-label={tr("Mobile navigation")}>
-            {routes.map((r) => (
+          <nav id="mobile-navigation" className="mobile-navigation" aria-label={tr("Mobile navigation")}>
+            {[...headerOrder, 11].map(i => routes[i]).map((r) => (
               <button
                 key={r.slug}
                 aria-current={route.slug === r.slug ? "page" : undefined}
@@ -337,6 +374,10 @@ export default function App() {
                 <ArrowRight size={14} />
               </button>
             ))}
+            <details className="mobile-more">
+              <summary>{tr("More tools")}<ChevronDown size={16} /></summary>
+              <div className="mobile-more-list">{moreOrder.map(i => routes[i]).map(item => <button key={item.slug} aria-current={route.slug === item.slug ? "page" : undefined} onClick={() => navigate(item.slug)}><item.icon size={16} />{tr(item.label)}<ArrowRight size={14} /></button>)}</div>
+            </details>
           </nav>
         )}
       </header>
@@ -346,70 +387,24 @@ export default function App() {
       <BackendStatusBanner />
       <main
         ref={main}
-        className={`main-scroll ${index === 0 ? "" : "page"}`}
+        id="main-content"
+        tabIndex={-1}
+        className="main-scroll page"
         aria-label={`${tr(route.title)} ${tr("page")}`}
       >
         {index !== 0 && (
-          <div className="topline">
+          <div className="simple-page-heading">
             <div className="tl-id">
-              <span className="tl-vox">
-                <VoxelCube size={18} />
-              </span>
-              <small>
-                {index < 11
-                  ? `${String(index + 1).padStart(2, "0")} / 11`
-                  : tr("HELP")}
-              </small>
               <h1>{tr(route.title)}</h1>
             </div>
-            <p>{tr(route.description)}</p>
-            <div className="tl-dots" aria-label={tr("Pages")}>
-              {routes.slice(0, 11).map((r, i) => (
-                <button
-                  key={r.slug}
-                  title={tr(r.title)}
-                  aria-label={tr(r.title)}
-                  onClick={() => navigate(r.slug)}
-                  className={i <= index ? "on" : ""}
-                />
-              ))}
-            </div>
-            <div className="tl-nav">
-              {index > 0 && (
-                <button
-                  className="jbtn"
-                  onClick={() => navigate(routes[index - 1].slug)}
-                >
-                  <ArrowLeft size={12} />
-                  <span>
-                    <small>{tr("PREV")}</small>
-                    {tr(routes[index - 1].label)}
-                  </span>
-                </button>
-              )}
-              {index < 10 && (
-                <button
-                  className="jbtn"
-                  onClick={() => navigate(routes[index + 1].slug)}
-                >
-                  <span>
-                    <small>{tr("NEXT")}</small>
-                    {tr(routes[index + 1].label)}
-                  </span>
-                  <ArrowRight size={12} />
-                </button>
-              )}
-            </div>
+            {![2, 3, 5].includes(index) && <p>{tr(route.description)}</p>}
+            <button type="button" className="simple-help" onClick={() => navigate("guide")}><BookOpen size={16} />{tr("Help")}</button>
           </div>
         )}
-        {/* The guided path sits above the landing page only: it is for a
-            first-time visitor working out where the story is, and it would be
-            noise on every other route. */}
-        {route.slug === "protocol" && <DemoGuide navigate={navigate} />}
-        <div key={route.slug} className="route-enter">
-          <Page
-            setNav={(n: number) => navigate(oldRouteOrder[n] ?? "protocol")}
-          />
+        <div key={`${route.slug}:${route.query}`} className="route-enter">
+          <Suspense fallback={<p className="simple-loading" role="status">{tr("Loading page…")}</p>}>
+            <Page setNav={(n: number) => navigate(oldRouteOrder[n] ?? "protocol")} />
+          </Suspense>
         </div>
       </main>
       <CommandPalette

@@ -70,12 +70,12 @@ export function describeStopPlan(plan: StopPlan, lang: Lang = "en"): string {
   if (lang === "vi") {
     if (plan.total === 0) return "Không có grant nào đang hoạt động — không có gì để dừng.";
     const prompts = plan.signatures === 1 ? "một chữ ký ví" : `${plan.signatures} chữ ký ví`;
-    return `Thu hồi ${plan.total} grant đang hoạt động trong ${prompts}. Mọi agent mất quyền ngay lập tức; tiền của bạn vẫn nằm trong vault.`;
+    return `Thu hồi ${plan.total} grant đang hoạt động trong ${prompts}. Quyền chấm dứt sau khi mạng xác nhận; tiền của bạn vẫn nằm trong vault.`;
   }
   if (plan.total === 0) return "No active grants — there is nothing to stop.";
   const grants = `${plan.total} active grant${plan.total === 1 ? "" : "s"}`;
   const prompts = plan.signatures === 1 ? "one wallet signature" : `${plan.signatures} wallet signatures`;
-  return `Revokes ${grants} in ${prompts}. Every agent loses authority immediately; your funds stay in the vault.`;
+  return `Revokes ${grants} in ${prompts}. Permissions end after network confirmation; your funds stay in the vault.`;
 }
 
 export interface StopResult {
@@ -94,6 +94,7 @@ export interface StopResult {
    * dropping it or frightening someone about a grant that is dead.
    */
   unrecorded?: number;
+  unconfirmed?: number;
 }
 
 /**
@@ -106,6 +107,9 @@ export interface StopResult {
  */
 export function describeStopResult(result: StopResult, lang: Lang = "en"): string {
   const { revoked, failed, error, unrecorded = 0 } = result;
+  if (result.unconfirmed) return lang === "vi"
+    ? `Đã xác nhận thu hồi ${revoked}; ${result.unconfirmed} quyền chưa xác nhận. Kiểm tra trạng thái giao dịch trước khi thử lại. ${failed - result.unconfirmed} quyền khác chưa được thu hồi.`
+    : `${revoked} confirmed revoked; ${result.unconfirmed} unconfirmed. Check transaction status before retrying. ${failed - result.unconfirmed} other policies were not revoked.`;
   if (lang === "vi") {
     const lag = unrecorded > 0 ? ` ${unrecorded} lệnh thu hồi chưa tới được API — chain đã ghi nhận; dashboard này sẽ tự cập nhật.` : "";
     if (failed === 0 && revoked === 0) return `Không có gì được thu hồi.${lag}`;
